@@ -458,6 +458,63 @@ function parsePlacement(text) {
   }));
 }
 
+// Extract spacing info from placement text: "space 20-25cm apart" or "thin to 15cm spacing"
+function extractSpacing(detail) {
+  const spacingMatch = detail.match(/(?:space|spacing|thin to)\s*(?:[-–to]?\s*)?(\d+)\s*cm/i);
+  return spacingMatch ? parseInt(spacingMatch[1], 10) : null;
+}
+
+// Extract row info: "2 rows" or "front row" or "back two rows"
+function extractRows(detail) {
+  const rowMatch = detail.match(/(\d+)\s*rows?/i);
+  if (rowMatch) return parseInt(rowMatch[1], 10);
+  if (/front row/i.test(detail)) return 1;
+  if (/back rows|middle rows/i.test(detail)) return 2;
+  if (/back two rows/i.test(detail)) return 2;
+  return 1;
+}
+
+// Calculate approximate seeds needed based on row length and spacing
+function calculateSeedCount(zoneDepth, spacingCm, numRows = 1) {
+  if (!spacingCm) return null;
+  const rowLengthCm = zoneDepth * 30.48; // feet to cm
+  const seedsPerRow = Math.floor(rowLengthCm / spacingCm) + 1;
+  return seedsPerRow * numRows;
+}
+
+// Build placement data for all zones
+function buildPlacementData() {
+  const data = [];
+  ZONES.forEach(zone => {
+    if (zone.rows.length === 0) return; // skip paths
+    zone.rows.forEach(row => {
+      if (!row.placement) return;
+      const parsed = parsePlacement(row.placement);
+      if (!parsed) return;
+      parsed.forEach(p => {
+        const seedData = SEEDS.find(s => s.name === p.plant);
+        const spacing = extractSpacing(p.detail);
+        const rows = extractRows(p.detail);
+        const seedCount = calculateSeedCount(zone.depth, spacing, rows);
+        data.push({
+          zone: zone.id,
+          zoneLabel: zone.label,
+          zoneDepth: zone.depth,
+          rowLabel: row.label,
+          plant: p.plant,
+          detail: p.detail,
+          spacing,
+          rows,
+          seedCount,
+          color: seedData?.color || "#999",
+          cat: seedData?.cat || "Unknown",
+        });
+      });
+    });
+  });
+  return data;
+}
+
 export default function SeedPlan() {
   const [activeTab, setActiveTab] = useState("timeline");
   const [expandedMonth, setExpandedMonth] = useState("Feb–Mar");
@@ -465,8 +522,10 @@ export default function SeedPlan() {
   const [selectedSeed, setSelectedSeed] = useState(null);
   const [catFilter, setCatFilter] = useState("All");
   const [selectedZone, setSelectedZone] = useState(null);
+  const [selectedPlacement, setSelectedPlacement] = useState(null);
 
   const filtered = catFilter === "All" ? SEEDS : SEEDS.filter(s => s.cat === catFilter);
+  const placementData = buildPlacementData();
 
   return (
     <div style={{
@@ -588,6 +647,7 @@ export default function SeedPlan() {
           { id: "social", label: "Issues" },
           { id: "palettes", label: "The Palettes" },
           { id: "layout", label: "The Grounds" },
+          { id: "placement", label: "The Placement" },
           { id: "field", label: "The Field" },
         ].map(tab => (
           <button key={tab.id} onClick={() => setActiveTab(tab.id)} style={{
@@ -993,6 +1053,207 @@ export default function SeedPlan() {
                     <span style={{ opacity: 0.5, fontSize: "13px" }}>{getAllSeeds(zone).length}</span>
                   </button>
                 ))}
+              </div>
+            </div>
+
+            <Flourish style={{ marginTop: "32px" }} />
+          </div>
+        )}
+
+        {/* === THE PLACEMENT === */}
+        {activeTab === "placement" && (
+          <div style={{ animation: "fadeUp 0.5s ease both" }}>
+            <div style={{ textAlign: "center", fontStyle: "italic", color: "#7A5C1E", fontSize: "18px", lineHeight: 1.8, maxWidth: "620px", margin: "0 auto 28px" }}>
+              "Dear Reader — knowing where to plant is one matter; knowing how many seeds to require is quite another.
+              What follows is the precise accounting of spacing and quantity for each variety."
+            </div>
+
+            {/* Map with dots overlay */}
+            <div style={{ display: "flex", gap: "28px", alignItems: "flex-start", justifyContent: "center", flexWrap: "wrap" }}>
+              <div style={{ maxWidth: "900px", flex: "1 1 320px" }}>
+                <div style={{ textAlign: "center", fontFamily: "'Cormorant SC', serif", fontSize: "14px", letterSpacing: "3px", color: "#8B6A18", marginBottom: "6px" }}>
+                  Lane
+                </div>
+
+                <svg
+                  viewBox="0 0 400 1020"
+                  style={{ width: "100%", display: "block", border: "1px solid rgba(196,168,130,0.3)", borderRadius: "2px" }}
+                  aria-label="Garden map with seed placement dots"
+                >
+                  <rect x="0" y="0" width="400" height="1020" fill="#F8F3EB" />
+
+                  {/* Left foot ruler */}
+                  <line x1="22" y1="0" x2="22" y2="1000" stroke="#C4A882" strokeWidth="0.5" opacity="0.5" />
+                  {[0,10,20,30,40,50,60,70,80,90,100].map(ft => (
+                    <g key={ft}>
+                      <line x1="16" y1={ft * 10} x2="22" y2={ft * 10} stroke="#C4A882" strokeWidth="0.8" />
+                      <text x="13" y={ft * 10 + 3.5} textAnchor="end" fontSize="7" fontFamily="'Outfit', sans-serif" fill="#A89474">{ft}′</text>
+                    </g>
+                  ))}
+
+                  {/* Zone blocks with placement dots */}
+                  {ZONES.map(zone => {
+                    const isPath = zone.rows.length === 0;
+                    const zoneH = zone.depth * 10;
+                    const zoneY = zone.yStart * 10;
+
+                    return (
+                      <g key={zone.id}>
+                        <rect
+                          x="30" y={zoneY} width="352" height={zoneH}
+                          fill={zone.fill} stroke={zone.stroke}
+                          strokeWidth="1" opacity={selectedZone && selectedZone !== zone.id ? 0.4 : 1}
+                          style={{ transition: "opacity 0.3s" }}
+                        />
+
+                        {/* Placement dots for this zone */}
+                        {placementData.filter(p => p.zone === zone.id).map((p, idx, arr) => {
+                          const rowIdx = zone.rows.findIndex(r => r.label === p.rowLabel);
+                          const totalRows = zone.rows.length;
+                          const rowH = zoneH / totalRows;
+                          const rowY = zoneY + rowIdx * rowH;
+                          const centerY = rowY + rowH / 2;
+                          // Position dots horizontally based on index
+                          const dotSpacing = Math.min(12, 300 / arr.length);
+                          const startX = 50 + (zoneH / 3);
+                          const cx = startX + (idx * dotSpacing);
+                          const cy = centerY + ((idx % 3) - 1) * (rowH / 4);
+                          const isSelected = selectedPlacement === p.plant;
+
+                          return (
+                            <circle
+                              key={idx}
+                              cx={cx}
+                              cy={cy}
+                              r={isSelected ? 6 : 4}
+                              fill={p.color}
+                              stroke={isSelected ? "#1E3A6E" : "rgba(59,47,32,0.5)"}
+                              strokeWidth={isSelected ? 2 : 1}
+                              opacity={selectedPlacement && !isSelected ? 0.5 : 0.9}
+                              style={{ cursor: "pointer", transition: "all 0.2s" }}
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                setSelectedPlacement(isSelected ? null : p.plant);
+                              }}
+                            >
+                              <title>{p.plant} — {p.spacing ? `${p.spacing}cm spacing` : "spacing TBD"}{p.seedCount ? ` · ~${p.seedCount} seeds` : ""}</title>
+                            </circle>
+                          );
+                        })}
+
+                        {!isPath && (
+                          <text x="191" y={zoneY + zoneH * 0.5 + 3} textAnchor="middle" fontSize="8" fontFamily="'Outfit', sans-serif" fill="#3B2F20" opacity="0.5">
+                            {zone.label}
+                          </text>
+                        )}
+                      </g>
+                    );
+                  })}
+
+                  {/* Scale bar */}
+                  <g transform="translate(35, 1007)">
+                    <rect x="0" y="0" width="100" height="3" fill="none" stroke="#8B7D6B" strokeWidth="1" />
+                    <line x1="0" y1="0" x2="0" y2="6" stroke="#8B7D6B" strokeWidth="1" />
+                    <line x1="100" y1="0" x2="100" y2="6" stroke="#8B7D6B" strokeWidth="1" />
+                    <text x="50" y="14" textAnchor="middle" fontSize="7" fontFamily="'Outfit', sans-serif" fill="#8B7D6B">10 feet</text>
+                  </g>
+                </svg>
+
+                <div style={{ textAlign: "center", fontFamily: "'Cormorant SC', serif", fontSize: "14px", letterSpacing: "3px", color: "#8B6A18", marginTop: "6px" }}>
+                  Farm fields to the South & East →
+                </div>
+
+                {/* Legend */}
+                <div style={{ marginTop: "16px", padding: "12px 16px", background: "rgba(255,250,235,0.6)", border: "1px solid rgba(180,140,60,0.3)", borderRadius: "3px" }}>
+                  <div style={{ fontSize: "12px", fontFamily: "'Outfit', sans-serif", color: "#8B6A18", letterSpacing: "1px", textTransform: "uppercase", marginBottom: "8px" }}>Click a dot to see details</div>
+                  <div style={{ display: "flex", gap: "12px", flexWrap: "wrap" }}>
+                    {["Cut Flowers", "Foliage & Filler", "Kitchen Garden"].map(cat => (
+                      <span key={cat} style={{ fontSize: "12px", fontFamily: "'Outfit', sans-serif", color: "#6B5020", display: "flex", alignItems: "center", gap: "4px" }}>
+                        <span style={{ width: "10px", height: "10px", borderRadius: "50%", background: cat === "Cut Flowers" ? "#F0DFA0" : cat === "Foliage & Filler" ? "#C5D9B0" : "#C8DEB5" }} />
+                        {cat}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              </div>
+
+              {/* Detail panel */}
+              <div style={{ flex: "1 1 320px", maxWidth: "420px" }}>
+                {selectedPlacement ? (() => {
+                  const p = placementData.find(d => d.plant === selectedPlacement);
+                  if (!p) return null;
+                  return (
+                    <div style={{ background: "rgba(255,255,255,0.85)", border: "1px solid #C4A882", borderRadius: "3px", padding: "22px", animation: "fadeUp 0.3s ease both" }}>
+                      <div style={{ fontSize: "13px", fontFamily: "'Outfit', sans-serif", letterSpacing: "1px", textTransform: "uppercase", color: "#8B6A18", marginBottom: "8px" }}>{p.zoneLabel}</div>
+                      <div style={{ fontSize: "20px", fontFamily: "'Cormorant Garamond', serif", fontWeight: 600, color: "#1A1208", marginBottom: "4px" }}>{p.plant}</div>
+                      <div style={{ fontSize: "13px", fontFamily: "'Outfit', sans-serif", color: "#6B5020", marginBottom: "14px" }}>{p.rowLabel}</div>
+
+                      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "12px", marginBottom: "16px" }}>
+                        <div style={{ background: "rgba(196,168,130,0.15)", padding: "10px", borderRadius: "2px" }}>
+                          <div style={{ fontSize: "11px", fontFamily: "'Outfit', sans-serif", color: "#8B6A18", textTransform: "uppercase", marginBottom: "4px" }}>Spacing</div>
+                          <div style={{ fontSize: "18px", fontFamily: "'Cormorant Garamond', serif", color: "#1A1208" }}>{p.spacing ? `${p.spacing} cm` : "—"}</div>
+                        </div>
+                        <div style={{ background: "rgba(196,168,130,0.15)", padding: "10px", borderRadius: "2px" }}>
+                          <div style={{ fontSize: "11px", fontFamily: "'Outfit', sans-serif", color: "#8B6A18", textTransform: "uppercase", marginBottom: "4px" }}>Rows</div>
+                          <div style={{ fontSize: "18px", fontFamily: "'Cormorant Garamond', serif", color: "#1A1208" }}>{p.rows}</div>
+                        </div>
+                        <div style={{ background: "rgba(196,168,130,0.15)", padding: "10px", borderRadius: "2px" }}>
+                          <div style={{ fontSize: "11px", fontFamily: "'Outfit', sans-serif", color: "#8B6A18", textTransform: "uppercase", marginBottom: "4px" }}>Est. Seeds</div>
+                          <div style={{ fontSize: "18px", fontFamily: "'Cormorant Garamond', serif", color: "#1A1208" }}>{p.seedCount || "—"}</div>
+                        </div>
+                        <div style={{ background: "rgba(196,168,130,0.15)", padding: "10px", borderRadius: "2px" }}>
+                          <div style={{ fontSize: "11px", fontFamily: "'Outfit', sans-serif", color: "#8B6A18", textTransform: "uppercase", marginBottom: "4px" }}>Category</div>
+                          <div style={{ fontSize: "14px", fontFamily: "'Cormorant Garamond', serif", color: "#1A1208" }}>{p.cat}</div>
+                        </div>
+                      </div>
+
+                      <div style={{ fontSize: "14px", fontFamily: "'Cormorant Garamond', serif", color: "#3B2F20", lineHeight: 1.7, fontStyle: "italic", background: "rgba(248,243,235,0.7)", padding: "12px", borderRadius: "2px" }}>
+                        {p.detail}
+                      </div>
+                    </div>
+                  );
+                })() : (
+                  <div style={{ background: "rgba(255,255,255,0.45)", border: "1px solid rgba(196,168,130,0.2)", borderRadius: "3px", padding: "32px 22px", textAlign: "center", color: "#B5A68E", fontFamily: "'Outfit', sans-serif", fontSize: "14px" }}>
+                    Select a dot on the map to view spacing and quantity details
+                  </div>
+                )}
+
+                {/* Full placement table */}
+                <div style={{ marginTop: "20px", background: "rgba(255,255,255,0.6)", border: "1px solid rgba(196,168,130,0.25)", borderRadius: "3px", overflow: "hidden" }}>
+                  <div style={{ fontSize: "13px", fontFamily: "'Outfit', sans-serif", letterSpacing: "1px", textTransform: "uppercase", color: "#8B6A18", padding: "12px 16px", background: "rgba(196,168,130,0.15)", borderBottom: "1px solid rgba(196,168,130,0.25)" }}>
+                    Complete Placement Table
+                  </div>
+                  <div style={{ maxHeight: "400px", overflowY: "auto" }}>
+                    <table style={{ width: "100%", borderCollapse: "collapse", fontSize: "13px" }}>
+                      <thead style={{ position: "sticky", top: 0, background: "rgba(248,243,235,0.95)" }}>
+                        <tr>
+                          <th style={{ textAlign: "left", padding: "8px 12px", fontFamily: "'Outfit', sans-serif", fontSize: "11px", textTransform: "uppercase", color: "#8B6A18", borderBottom: "1px solid rgba(196,168,130,0.3)" }}>Variety</th>
+                          <th style={{ textAlign: "center", padding: "8px 12px", fontFamily: "'Outfit', sans-serif", fontSize: "11px", textTransform: "uppercase", color: "#8B6A18", borderBottom: "1px solid rgba(196,168,130,0.3)" }}>Spacing</th>
+                          <th style={{ textAlign: "center", padding: "8px 12px", fontFamily: "'Outfit', sans-serif", fontSize: "11px", textTransform: "uppercase", color: "#8B6A18", borderBottom: "1px solid rgba(196,168,130,0.3)" }}>Seeds</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {placementData.map((p, i) => (
+                          <tr
+                            key={i}
+                            onClick={() => setSelectedPlacement(p.plant)}
+                            style={{
+                              background: selectedPlacement === p.plant ? "rgba(30,58,110,0.08)" : i % 2 === 0 ? "rgba(255,255,255,0.4)" : "rgba(248,243,235,0.5)",
+                              cursor: "pointer",
+                              transition: "background 0.2s"
+                            }}
+                            onMouseEnter={e => e.currentTarget.style.background = selectedPlacement === p.plant ? "rgba(30,58,110,0.12)" : "rgba(196,168,130,0.15)"}
+                            onMouseLeave={e => e.currentTarget.style.background = selectedPlacement === p.plant ? "rgba(30,58,110,0.08)" : i % 2 === 0 ? "rgba(255,255,255,0.4)" : "rgba(248,243,235,0.5)"}
+                          >
+                            <td style={{ padding: "8px 12px", fontFamily: "'Cormorant Garamond', serif", color: "#1A1208" }}>{p.plant}</td>
+                            <td style={{ textAlign: "center", padding: "8px 12px", fontFamily: "'Outfit', sans-serif", color: "#6B5020" }}>{p.spacing ? `${p.spacing}cm` : "—"}</td>
+                            <td style={{ textAlign: "center", padding: "8px 12px", fontFamily: "'Cormorant Garamond', serif", color: "#1A1208", fontWeight: 600 }}>{p.seedCount || "—"}</td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
               </div>
             </div>
 
