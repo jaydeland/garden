@@ -542,25 +542,36 @@ export default function SeedPlan() {
 
         <Flourish style={{ marginTop: "10px" }} />
 
-        <div style={{ maxWidth: "620px", margin: "14px auto 0", fontSize: "18px", fontStyle: "italic", lineHeight: 1.9, color: "#7A5C1E" }}>
-          "Dear Reader — fifty-seven varieties have been summoned from four purveyors to the estate grounds along Highway 3.
-          Cut flowers, foliage, nine tomatoes of unusual character, poppies sown with reckless ambition,
-          three basils, an Edelweiss, and one Brussels sprout for good measure.
-          This author has made thorough enquiry. What follows is their Season."
+        <div style={{
+          maxWidth: "620px", margin: "18px auto 0",
+          background: "rgba(255,250,235,0.65)",
+          border: "1px solid rgba(180,140,60,0.35)",
+          borderRadius: "8px",
+          padding: "22px 28px",
+          boxShadow: "0 2px 16px rgba(180,140,60,0.10)",
+        }}>
+          <div style={{ fontSize: "28px", color: "#C9960A", lineHeight: 1, marginBottom: "10px", fontFamily: "'Cormorant Garamond', serif" }}>"</div>
+          <div style={{ fontSize: "17px", fontStyle: "italic", lineHeight: 1.9, color: "#7A5C1E", fontFamily: "'Cormorant Garamond', serif" }}>
+            Dear Reader — fifty-seven varieties have been summoned from four purveyors to the estate grounds along Highway 3.
+            Cut flowers, foliage, nine tomatoes of unusual character, poppies sown with reckless ambition,
+            three basils, an Edelweiss, and one Brussels sprout for good measure.
+            This author has made thorough enquiry. What follows is their Season.
+          </div>
+          <div style={{ fontSize: "13px", fontFamily: "'Outfit', sans-serif", letterSpacing: "2px", textTransform: "uppercase", color: "#8B6A18", marginTop: "14px" }}>— Lady Gardendown</div>
         </div>
 
         {/* Order summary badges */}
         <div style={{ display: "flex", justifyContent: "center", gap: "10px", marginTop: "18px", flexWrap: "wrap" }}>
           {[
-            { name: "Original Order", id: "WEB-024012", count: 16 },
-            { name: "Moonglow Gardens", id: "R709518406", count: 12 },
-            { name: "Stems Flower Farm", id: "#29659", count: 9 },
-            { name: "Ontario Seed Co.", id: "OSC-2026", count: 20 },
+            { name: "Original Order", count: 16 },
+            { name: "Moonglow Gardens", count: 12 },
+            { name: "Stems Flower Farm", count: 9 },
+            { name: "Ontario Seed Co.", count: 20 },
           ].map((o, i) => (
             <div key={i} style={{
               fontSize: "14px", fontFamily: "'Outfit', sans-serif", padding: "6px 14px",
-              background: "rgba(59,47,32,0.06)", border: "1px solid rgba(196,168,130,0.25)",
-              borderRadius: "2px", color: "#6B5D4A",
+              background: "#6B1E35", border: "1px solid #4A1226",
+              borderRadius: "2px", color: "#F5EDD0",
             }}>
               <strong>{o.name}</strong> · {o.count} varieties
             </div>
@@ -1144,12 +1155,23 @@ export default function SeedPlan() {
       {/* Footer */}
       <div style={{ textAlign: "center", padding: "36px 24px 40px" }}>
         <Flourish />
-        <div style={{ fontSize: "14px", fontFamily: "'Outfit', sans-serif", color: "#1A1208", marginTop: "12px", letterSpacing: "0.5px", lineHeight: 1.8 }}>
+        <div style={{ fontSize: "13px", fontFamily: "'Outfit', sans-serif", color: "#1A1208", marginTop: "14px", letterSpacing: "1px", lineHeight: 1.8 }}>
           Total investment: ~C$171 · Last frost Simcoe ~May 15–20
         </div>
-        <div style={{ fontSize: "15px", fontStyle: "italic", color: "#1A1208", marginTop: "10px" }}>
-          "Yours, as always, with discretion and a trowel — Lady Gardendown.
-          One does not order from four seed purveyors by accident. One does it because the heart wants what the heart wants, and the garden has room."
+        <div style={{
+          maxWidth: "560px", margin: "18px auto 0",
+          background: "rgba(255,250,235,0.65)",
+          border: "1px solid rgba(180,140,60,0.35)",
+          borderRadius: "8px",
+          padding: "22px 28px",
+          boxShadow: "0 2px 16px rgba(180,140,60,0.10)",
+          textAlign: "left",
+        }}>
+          <div style={{ fontSize: "28px", color: "#C9960A", lineHeight: 1, marginBottom: "10px", fontFamily: "'Cormorant Garamond', serif" }}>"</div>
+          <div style={{ fontSize: "16px", fontStyle: "italic", lineHeight: 1.85, color: "#1A1208", fontFamily: "'Cormorant Garamond', serif" }}>
+            Yours, as always, with discretion and a trowel. One does not order from four seed purveyors by accident. One does it because the heart wants what the heart wants, and the garden has room.
+          </div>
+          <div style={{ fontSize: "13px", fontFamily: "'Outfit', sans-serif", letterSpacing: "2px", textTransform: "uppercase", color: "#8B6A18", marginTop: "14px" }}>— Lady Gardendown</div>
         </div>
       </div>
     </div>
