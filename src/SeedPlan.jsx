@@ -1106,40 +1106,55 @@ export default function SeedPlan() {
                           style={{ transition: "opacity 0.3s" }}
                         />
 
-                        {/* Placement dots for this zone */}
-                        {placementData.filter(p => p.zone === zone.id).map((p, idx, arr) => {
-                          const rowIdx = zone.rows.findIndex(r => r.label === p.rowLabel);
-                          const totalRows = zone.rows.length;
-                          const rowH = zoneH / totalRows;
-                          const rowY = zoneY + rowIdx * rowH;
-                          const centerY = rowY + rowH / 2;
-                          // Position dots horizontally based on index
-                          const dotSpacing = Math.min(12, 300 / arr.length);
-                          const startX = 50 + (zoneH / 3);
-                          const cx = startX + (idx * dotSpacing);
-                          const cy = centerY + ((idx % 3) - 1) * (rowH / 4);
-                          const isSelected = selectedPlacement === p.plant;
+                        {/* Placement dots for this zone — grouped by row */}
+                        {(() => {
+                          const zonePlacements = placementData.filter(p => p.zone === zone.id);
+                          const groupedByRow = {};
+                          zonePlacements.forEach(p => {
+                            if (!groupedByRow[p.rowLabel]) groupedByRow[p.rowLabel] = [];
+                            groupedByRow[p.rowLabel].push(p);
+                          });
 
-                          return (
-                            <circle
-                              key={idx}
-                              cx={cx}
-                              cy={cy}
-                              r={isSelected ? 6 : 4}
-                              fill={p.color}
-                              stroke={isSelected ? "#1E3A6E" : "rgba(59,47,32,0.5)"}
-                              strokeWidth={isSelected ? 2 : 1}
-                              opacity={selectedPlacement && !isSelected ? 0.5 : 0.9}
-                              style={{ cursor: "pointer", transition: "all 0.2s" }}
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                setSelectedPlacement(isSelected ? null : p.plant);
-                              }}
-                            >
-                              <title>{p.plant} — {p.spacing ? `${p.spacing}cm spacing` : "spacing TBD"}{p.seedCount ? ` · ~${p.seedCount} seeds` : ""}</title>
-                            </circle>
-                          );
-                        })}
+                          return zone.rows.map((row, rowIdx) => {
+                            const rowPlacements = groupedByRow[row.label] || [];
+                            if (rowPlacements.length === 0) return null;
+
+                            const totalRows = zone.rows.length;
+                            const rowH = zoneH / totalRows;
+                            const rowY = zoneY + rowIdx * rowH;
+                            const centerY = rowY + rowH * 0.5;
+
+                            // Position dots horizontally within the row
+                            const dotSpacing = Math.max(20, (320) / (rowPlacements.length + 1));
+                            const startX = 45;
+
+                            return rowPlacements.map((p, dotIdx) => {
+                              const cx = startX + (dotIdx + 1) * dotSpacing;
+                              const cy = centerY;
+                              const isSelected = selectedPlacement === p.plant;
+
+                              return (
+                                <circle
+                                  key={p.plant}
+                                  cx={cx}
+                                  cy={cy}
+                                  r={isSelected ? 5 : 4}
+                                  fill={p.color}
+                                  stroke={isSelected ? "#1E3A6E" : "rgba(59,47,32,0.5)"}
+                                  strokeWidth={isSelected ? 2 : 1}
+                                  opacity={selectedPlacement && !isSelected ? 0.4 : 0.9}
+                                  style={{ cursor: "pointer", transition: "all 0.2s" }}
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    setSelectedPlacement(isSelected ? null : p.plant);
+                                  }}
+                                >
+                                  <title>{p.plant} — {p.spacing ? `${p.spacing}cm spacing` : "spacing TBD"}{p.seedCount ? ` · ~${p.seedCount} seeds` : ""}</title>
+                                </circle>
+                              );
+                            });
+                          });
+                        })()}
 
                         {!isPath && (
                           <text x="191" y={zoneY + zoneH * 0.5 + 3} textAnchor="middle" fontSize="8" fontFamily="'Outfit', sans-serif" fill="#3B2F20" opacity="0.5">
