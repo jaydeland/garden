@@ -1,4 +1,5 @@
 import { useState } from "react";
+import furrowImg from "./assets/furrow-plow.jpg";
 
 const SEEDS = [
   // === ORDER 1: Original (WEB-024012) ===
@@ -1027,7 +1028,7 @@ export default function SeedPlan() {
                 onMouseEnter={e => e.currentTarget.style.boxShadow = "0 4px 24px rgba(180,140,60,0.2)"}
                 onMouseLeave={e => e.currentTarget.style.boxShadow = "0 2px 12px rgba(180,140,60,0.08)"}
               >
-                <div style={{ fontSize: "42px", marginBottom: "14px", opacity: 0.85 }}>🌾</div>
+                <img src={furrowImg} alt="Single Furrow Farm" style={{ width: "96px", height: "96px", borderRadius: "50%", objectFit: "cover", border: "3px solid #C9960A", marginBottom: "14px", boxShadow: "0 0 0 4px rgba(201,150,10,0.2)" }} />
                 <div style={{ fontFamily: "'Cormorant SC', serif", fontSize: "26px", color: "#1A1208", letterSpacing: "2px", marginBottom: "6px" }}>
                   Single Furrow Farm
                 </div>
