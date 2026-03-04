@@ -1,0 +1,124 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 300 300">
+  <!-- Parchment fill -->
+  <circle cx="150" cy="150" r="149" fill="#FBF5E8"/>
+
+  <!-- Outer ring -->
+  <circle cx="150" cy="150" r="143" fill="none" stroke="#3A3A3A" stroke-width="2.2"/>
+  <!-- Inner ring -->
+  <circle cx="150" cy="150" r="131" fill="none" stroke="#3A3A3A" stroke-width="1.5"/>
+
+  <!-- Watering can (left side) -->
+  <path fill="#3A3A3A" d="
+    M 64,198
+    L 64,175
+    C 64,170 68,167 73,167
+    L 100,167
+    C 105,167 109,170 109,175
+    L 109,198
+    C 109,203 105,206 100,206
+    L 73,206
+    C 68,206 64,203 64,198 Z
+  "/>
+  <!-- Watering can spout -->
+  <path fill="#3A3A3A" d="
+    M 64,172 L 50,158 L 47,161 L 60,176 Z
+  "/>
+  <!-- Watering can handle -->
+  <path fill="none" stroke="#3A3A3A" stroke-width="5" stroke-linecap="round" d="
+    M 70,167 C 70,152 103,152 103,167
+  "/>
+  <!-- Spout holes (little dots) -->
+  <circle cx="46" cy="162" r="2" fill="#FBF5E8"/>
+  <circle cx="42" cy="158" r="2" fill="#FBF5E8"/>
+  <circle cx="38" cy="163" r="2" fill="#FBF5E8"/>
+
+  <!-- Woman silhouette — gardening pose, leaning on hoe -->
+
+  <!-- Wide-brimmed garden hat -->
+  <ellipse cx="168" cy="82" rx="38" ry="10" fill="#3A3A3A"/>
+  <!-- Hat crown -->
+  <path fill="#3A3A3A" d="
+    M 152,82
+    C 152,58 184,58 184,82 Z
+  "/>
+  <!-- Hat ribbon detail -->
+  <path fill="#FBF5E8" opacity="0.35" d="
+    M 154,80 Q 168,74 182,80 Q 168,77 154,80 Z
+  "/>
+
+  <!-- Head -->
+  <ellipse cx="168" cy="96" rx="13" ry="15" fill="#3A3A3A"/>
+
+  <!-- Neck -->
+  <rect x="163" y="109" width="10" height="10" rx="3" fill="#3A3A3A"/>
+
+  <!-- Body / dress bodice -->
+  <path fill="#3A3A3A" d="
+    M 155,118
+    C 148,122 143,130 142,140
+    L 140,158
+    L 185,158
+    L 182,138
+    C 180,128 174,120 167,118
+    Z
+  "/>
+
+  <!-- Right arm — extended forward holding hoe handle -->
+  <path fill="#3A3A3A" d="
+    M 180,125
+    C 188,120 198,118 208,114
+    L 210,120
+    C 200,124 190,127 182,132
+    Z
+  "/>
+
+  <!-- Left arm — down at side -->
+  <path fill="#3A3A3A" d="
+    M 148,125
+    C 142,130 138,140 136,150
+    L 141,152
+    C 142,143 145,133 151,128
+    Z
+  "/>
+
+  <!-- Apron / skirt — A-line flare -->
+  <path fill="#3A3A3A" d="
+    M 140,158
+    C 132,168 128,185 126,202
+    L 126,218
+    L 190,218
+    L 192,202
+    C 190,185 185,168 180,158
+    Z
+  "/>
+
+  <!-- Hoe handle — long diagonal from right hand down to ground right -->
+  <line x1="210" y1="112" x2="226" y2="228" stroke="#3A3A3A" stroke-width="5.5" stroke-linecap="round"/>
+
+  <!-- Hoe head at ground -->
+  <rect x="216" y="222" width="28" height="8" rx="2" fill="#3A3A3A" transform="rotate(-8, 220, 226)"/>
+
+  <!-- Shoes / feet showing at hem -->
+  <ellipse cx="140" cy="221" rx="9" ry="5" fill="#3A3A3A"/>
+  <ellipse cx="164" cy="221" rx="9" ry="5" fill="#3A3A3A"/>
+
+  <!-- Ground / grass tufts -->
+  <path fill="#3A3A3A" d="
+    M 80,228 Q 85,218 90,228 Q 95,218 100,228
+    Q 105,218 110,228 Q 115,218 120,228
+    Q 125,218 130,228 Q 135,218 140,228
+    Q 145,218 150,228 Q 155,218 160,228
+    Q 165,218 170,228 Q 175,218 180,228
+    Q 185,218 190,228 Q 195,218 200,228
+    Q 205,218 210,228 Q 215,218 220,228
+    L 220,232 L 80,232 Z
+  "/>
+
+  <!-- Small flowers at feet -->
+  <circle cx="118" cy="222" r="4" fill="#3A3A3A"/>
+  <circle cx="111" cy="217" r="2.5" fill="#3A3A3A"/>
+  <circle cx="106" cy="213" r="1.8" fill="#3A3A3A"/>
+  <circle cx="200" cy="222" r="3.5" fill="#3A3A3A"/>
+  <circle cx="207" cy="217" r="2.2" fill="#3A3A3A"/>
+</svg>
