@@ -576,6 +576,7 @@ export default function SeedPlan() {
           { id: "social", label: "Issues" },
           { id: "palettes", label: "The Palettes" },
           { id: "layout", label: "The Grounds" },
+          { id: "field", label: "The Field" },
         ].map(tab => (
           <button key={tab.id} onClick={() => setActiveTab(tab.id)} style={{
             padding: "9px 14px",
@@ -984,6 +985,64 @@ export default function SeedPlan() {
             </div>
 
             <Flourish style={{ marginTop: "32px" }} />
+          </div>
+        )}
+
+        {/* === THE FIELD === */}
+        {activeTab === "field" && (
+          <div style={{ animation: "fadeUp 0.5s ease both", maxWidth: "680px", margin: "0 auto" }}>
+            <div style={{ textAlign: "center", fontStyle: "italic", color: "#7A5C1E", fontSize: "18px", lineHeight: 1.8, marginBottom: "32px" }}>
+              "Dear Reader — one does not merely read about gardens. One follows them.
+              Lady Gardendown commends to your attention the dispatches of Single Furrow Farm,
+              a fellow chronicler of seed, soil, and the seasons."
+            </div>
+
+            <a
+              href="https://www.instagram.com/singlefurrowfarm"
+              target="_blank"
+              rel="noopener noreferrer"
+              style={{ display: "block", textDecoration: "none" }}
+            >
+              <div style={{
+                background: "rgba(255,250,235,0.7)",
+                border: "1px solid rgba(180,140,60,0.35)",
+                borderRadius: "3px",
+                padding: "36px 32px",
+                textAlign: "center",
+                cursor: "pointer",
+                transition: "box-shadow 0.25s ease",
+                boxShadow: "0 2px 12px rgba(180,140,60,0.08)",
+              }}
+                onMouseEnter={e => e.currentTarget.style.boxShadow = "0 4px 24px rgba(180,140,60,0.2)"}
+                onMouseLeave={e => e.currentTarget.style.boxShadow = "0 2px 12px rgba(180,140,60,0.08)"}
+              >
+                <div style={{ fontSize: "42px", marginBottom: "14px", opacity: 0.85 }}>🌾</div>
+                <div style={{ fontFamily: "'Cormorant SC', serif", fontSize: "26px", color: "#1A1208", letterSpacing: "2px", marginBottom: "6px" }}>
+                  Single Furrow Farm
+                </div>
+                <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: "14px", color: "#8B6A18", letterSpacing: "2px", textTransform: "uppercase", marginBottom: "20px" }}>
+                  @singlefurrowfarm
+                </div>
+                <div style={{ width: "48px", height: "1px", background: "rgba(180,140,60,0.4)", margin: "0 auto 20px" }} />
+                <div style={{ fontFamily: "'Cormorant Garamond', serif", fontStyle: "italic", fontSize: "17px", color: "#6B5020", lineHeight: 1.7, maxWidth: "400px", margin: "0 auto 24px" }}>
+                  "A farm of uncommon refinement, documented with the kind of candour
+                  that makes one feel the soil between one's fingers from a considerable distance."
+                </div>
+                <div style={{
+                  display: "inline-flex", alignItems: "center", gap: "8px",
+                  padding: "10px 24px",
+                  background: "linear-gradient(145deg, #1E3A6E, #152D57)",
+                  color: "#F5EDD0",
+                  fontFamily: "'Outfit', sans-serif", fontSize: "13px", letterSpacing: "2px", textTransform: "uppercase",
+                  borderRadius: "2px",
+                }}>
+                  Follow on Instagram
+                  <span style={{ fontSize: "16px" }}>→</span>
+                </div>
+              </div>
+            </a>
+
+            <Flourish style={{ marginTop: "36px" }} />
           </div>
         )}
 
