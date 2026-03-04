@@ -443,6 +443,20 @@ const Flourish = ({ style = {} }) => (
   <div style={{ textAlign: "center", color: "#C9960A", fontSize: "20px", letterSpacing: "8px", userSelect: "none", ...style }}>❦ ✿ ❦</div>
 );
 
+function parsePlacement(text) {
+  const regex = /([A-Z][^(:]+\([^)]+\)):\s*/g;
+  const matches = [];
+  let m;
+  while ((m = regex.exec(text)) !== null) {
+    matches.push({ name: m[1].trim(), start: m.index, contentStart: m.index + m[0].length });
+  }
+  if (matches.length < 2) return null;
+  return matches.map((entry, i) => ({
+    plant: entry.name,
+    detail: text.slice(entry.contentStart, i < matches.length - 1 ? matches[i + 1].start : text.length).replace(/\.\s*$/, "").trim(),
+  }));
+}
+
 export default function SeedPlan() {
   const [activeTab, setActiveTab] = useState("timeline");
   const [expandedMonth, setExpandedMonth] = useState("Feb–Mar");
@@ -548,7 +562,7 @@ export default function SeedPlan() {
               background: "rgba(59,47,32,0.06)", border: "1px solid rgba(196,168,130,0.25)",
               borderRadius: "2px", color: "#6B5D4A",
             }}>
-              <strong>{o.name}</strong> · {o.id} · {o.count} varieties
+              <strong>{o.name}</strong> · {o.count} varieties
             </div>
           ))}
         </div>
@@ -895,9 +909,23 @@ export default function SeedPlan() {
                           <div style={{ fontSize: "14px", fontFamily: "'Outfit', sans-serif", letterSpacing: "2px", textTransform: "uppercase", color: zone.stroke, marginBottom: "6px", fontWeight: 600 }}>
                             {row.label}
                           </div>
-                          <div style={{ fontSize: "15px", fontFamily: "'Outfit', sans-serif", color: "#6B5D4A", lineHeight: 1.65, marginBottom: "10px", background: `${zone.fill}55`, padding: "8px 10px", borderRadius: "2px", borderLeft: `2px solid ${zone.stroke}` }}>
-                            {row.placement}
-                          </div>
+                          {(() => {
+                            const entries = parsePlacement(row.placement);
+                            return entries ? (
+                              <div style={{ marginBottom: "10px", display: "flex", flexDirection: "column", gap: "8px" }}>
+                                {entries.map((e, ei) => (
+                                  <div key={ei} style={{ background: `${zone.fill}55`, borderLeft: `2px solid ${zone.stroke}`, borderRadius: "2px", padding: "8px 10px" }}>
+                                    <div style={{ fontSize: "13px", fontFamily: "'Outfit', sans-serif", fontWeight: 700, letterSpacing: "0.5px", color: zone.stroke, marginBottom: "3px" }}>{e.plant}</div>
+                                    <div style={{ fontSize: "14px", fontFamily: "'Outfit', sans-serif", color: "#6B5D4A", lineHeight: 1.65 }}>{e.detail}</div>
+                                  </div>
+                                ))}
+                              </div>
+                            ) : (
+                              <div style={{ fontSize: "15px", fontFamily: "'Outfit', sans-serif", color: "#6B5D4A", lineHeight: 1.65, marginBottom: "10px", background: `${zone.fill}55`, padding: "8px 10px", borderRadius: "2px", borderLeft: `2px solid ${zone.stroke}` }}>
+                                {row.placement}
+                              </div>
+                            );
+                          })()}
                           <div style={{ display: "flex", flexWrap: "wrap", gap: "5px" }}>
                             {row.seeds.map((sName, si) => {
                               const sd = SEEDS.find(s => s.name === sName);
@@ -1057,11 +1085,10 @@ export default function SeedPlan() {
       {/* Footer */}
       <div style={{ textAlign: "center", padding: "36px 24px 40px" }}>
         <Flourish />
-        <div style={{ fontSize: "14px", fontFamily: "'Outfit', sans-serif", color: "#8B6A18", marginTop: "12px", letterSpacing: "0.5px", lineHeight: 1.8 }}>
-          Order 1: WEB-024012 · Order 2: R709518406 (Moonglow Gardens) · Order 3: #29659 (Stems Flower Farm) · Order 4: OSC-2026 (Ontario Seed Co.)<br />
+        <div style={{ fontSize: "14px", fontFamily: "'Outfit', sans-serif", color: "#1A1208", marginTop: "12px", letterSpacing: "0.5px", lineHeight: 1.8 }}>
           Total investment: ~C$171 · Last frost Simcoe ~May 15–20
         </div>
-        <div style={{ fontSize: "15px", fontStyle: "italic", color: "#B5A68E", marginTop: "10px" }}>
+        <div style={{ fontSize: "15px", fontStyle: "italic", color: "#1A1208", marginTop: "10px" }}>
           "Yours, as always, with discretion and a trowel — Lady Gardendown.
           One does not order from four seed purveyors by accident. One does it because the heart wants what the heart wants, and the garden has room."
         </div>
