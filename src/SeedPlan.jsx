@@ -446,17 +446,27 @@ const Flourish = ({ style = {} }) => (
 );
 
 function parsePlacement(text) {
-  const regex = /([A-Z][^(:]+\([^)]+\)):\s*/g;
+  // Match plant entries: "Plant Name (XXcm): details" or "Plant A, Plant B, Plant C (all XXcm): details"
+  // Pattern handles: name(s), optional "all", height in parens, colon, details
+  const regex = /([A-Z][a-zA-Z\s&'+-]+(?:,\s*[A-Z][a-zA-Z\s&'+-]+)*)\s*(?:\(all\s+)?(\d+(?:[–-]\d+)?\s*cm)\)?:\s*([^:]+?(?=,\s*[A-Z]|\n|$))/gs;
   const matches = [];
   let m;
   while ((m = regex.exec(text)) !== null) {
-    matches.push({ name: m[1].trim(), start: m.index, contentStart: m.index + m[0].length });
+    const plantNamesStr = m[1].trim();
+    const detail = (m[3] || '').trim();
+
+    // Split comma-separated plant names
+    const plantNames = plantNamesStr.split(',').map(n => n.trim()).filter(n => n);
+
+    plantNames.forEach(name => {
+      matches.push({
+        name,
+        detail: detail,
+        height: m[2],
+      });
+    });
   }
-  if (matches.length < 2) return null;
-  return matches.map((entry, i) => ({
-    plant: entry.name,
-    detail: text.slice(entry.contentStart, i < matches.length - 1 ? matches[i + 1].start : text.length).replace(/\.\s*$/, "").trim(),
-  }));
+  return matches.length > 0 ? matches : null;
 }
 
 // Extract spacing info from placement text: "space 20-25cm apart" or "thin to 15cm spacing"
@@ -491,19 +501,19 @@ function buildPlacementData() {
     zone.rows.forEach(row => {
       if (!row.placement) return;
       const parsed = parsePlacement(row.placement);
-      if (!parsed) return;
+      if (!parsed || parsed.length === 0) return;
       parsed.forEach(p => {
-        const seedData = SEEDS.find(s => s.name === p.plant);
+        const seedData = SEEDS.find(s => s.name === p.name);
         // Use imported spacing data from seedData.js, fall back to parsing
-        let spacing = SEED_SPACING[p.plant]?.spacing || extractSpacing(p.detail);
-        let rows = SEED_SPACING[p.plant]?.rows || extractRows(p.detail);
+        let spacing = SEED_SPACING[p.name]?.spacing || extractSpacing(p.detail);
+        let rows = SEED_SPACING[p.name]?.rows || extractRows(p.detail);
         const seedCount = calculateSeedCount(zone.depth, spacing, rows);
         data.push({
           zone: zone.id,
           zoneLabel: zone.label,
           zoneDepth: zone.depth,
           rowLabel: row.label,
-          plant: p.plant,
+          plant: p.name,
           detail: p.detail,
           spacing,
           rows,
@@ -1078,37 +1088,51 @@ export default function SeedPlan() {
                 </div>
 
                 <svg
-                  viewBox="0 0 400 1020"
+                  viewBox="-30 -10 460 1050"
                   style={{ width: "100%", display: "block", border: "1px solid rgba(196,168,130,0.3)", borderRadius: "2px" }}
                   aria-label="Garden map with seed placement dots"
                 >
-                  <rect x="0" y="0" width="400" height="1020" fill="#F8F3EB" />
+                  <rect x="-30" y="-10" width="460" height="1050" fill="#F8F3EB" />
 
                   {/* Left foot ruler */}
-                  <line x1="22" y1="0" x2="22" y2="1000" stroke="#C4A882" strokeWidth="0.5" opacity="0.5" />
+                  <line x1="0" y1="0" x2="0" y2="1000" stroke="#C4A882" strokeWidth="0.5" opacity="0.5" />
                   {[0,10,20,30,40,50,60,70,80,90,100].map(ft => (
                     <g key={ft}>
-                      <line x1="16" y1={ft * 10} x2="22" y2={ft * 10} stroke="#C4A882" strokeWidth="0.8" />
-                      <text x="13" y={ft * 10 + 3.5} textAnchor="end" fontSize="7" fontFamily="'Outfit', sans-serif" fill="#A89474">{ft}′</text>
+                      <line x1="-6" y1={ft * 10} x2="0" y2={ft * 10} stroke="#C4A882" strokeWidth="0.8" />
+                      <text x="-9" y={ft * 10 + 3.5} textAnchor="end" fontSize="7" fontFamily="'Outfit', sans-serif" fill="#A89474">{ft}′</text>
                     </g>
                   ))}
+
+                  {/* Top width ruler */}
+                  <line x1="0" y1="-6" x2="300" y2="-6" stroke="#C4A882" strokeWidth="0.5" opacity="0.5" />
+                  {[0, 10, 20, 30].map((ft, i) => {
+                    const x = i * 100;
+                    return (
+                      <g key={ft}>
+                        <line x1={x} y1="-9" x2={x} y2="-3" stroke="#C4A882" strokeWidth="0.8" />
+                        <text x={x} y="-11" textAnchor="middle" fontSize="7" fontFamily="'Outfit', sans-serif" fill="#A89474">{ft}′</text>
+                      </g>
+                    );
+                  })}
 
                   {/* Zone blocks with placement dots */}
                   {ZONES.map(zone => {
                     const isPath = zone.rows.length === 0;
                     const zoneH = zone.depth * 10;
                     const zoneY = zone.yStart * 10;
+                    const zoneX = 10; // Start at x=10 to leave room for ruler
+                    const zoneW = 290; // 30 feet = 300 units, minus small margin
 
                     return (
                       <g key={zone.id}>
                         <rect
-                          x="30" y={zoneY} width="352" height={zoneH}
+                          x={zoneX} y={zoneY} width={zoneW} height={zoneH}
                           fill={zone.fill} stroke={zone.stroke}
                           strokeWidth="1" opacity={selectedZone && selectedZone !== zone.id ? 0.4 : 1}
                           style={{ transition: "opacity 0.3s" }}
                         />
 
-                        {/* Placement dots for this zone — positioned by actual spacing */}
+                        {/* Placement dots for this zone — showing multiple plants per variety with correct spacing */}
                         {(() => {
                           const zonePlacements = placementData.filter(p => p.zone === zone.id);
                           const groupedByRow = {};
@@ -1126,53 +1150,58 @@ export default function SeedPlan() {
                             const rowY = zoneY + rowIdx * rowH;
                             const centerY = rowY + rowH * 0.5;
 
-                            // SVG: 10 units = 1 foot, zone width = 352 units (representing ~30 feet = 914cm)
-                            // Use actual spacing to position dots proportionally
-                            const zoneWidthCm = 30 * 30.48; // 30 feet in cm
-                            const svgUnitsPerCm = 352 / zoneWidthCm;
+                            // SVG: 10 units = 1 foot = 30.48cm, so 1cm = 0.328 SVG units
+                            const svgUnitsPerCm = 10 / 30.48;
 
-                            // Calculate cumulative positions based on spacing
-                            let currentX = 20; // Start with small margin
-                            const positionedDots = [];
+                            // For each variety in this row, draw multiple dots representing individual plants
+                            // spaced according to their spacing requirement
+                            const allDots = [];
+                            let xOffset = 5; // Small margin from left edge
 
-                            rowPlacements.forEach((p, idx) => {
-                              const spacingCm = p.spacing || 25; // Default if unknown
-                              // Position based on cumulative spacing from start of row
-                              const positionInRow = idx === 0 ? 0 :
-                                rowPlacements.slice(0, idx).reduce((sum, prev) => sum + (prev.spacing || 25), 0);
-                              const cx = 20 + (positionInRow * svgUnitsPerCm);
+                            rowPlacements.forEach((p) => {
+                              const spacingCm = p.spacing || 20; // Default 20cm if unknown
+                              const spacingUnits = spacingCm * svgUnitsPerCm; // Convert to SVG units
 
-                              // Only show if within bounds
-                              if (cx < 370) {
+                              // Calculate how many plants fit in the zone width at this spacing
+                              const availableWidth = zoneW - 10; // Minus margins
+                              const numPlants = Math.floor(availableWidth / spacingUnits);
+
+                              // Draw plants at correct spacing intervals
+                              for (let i = 0; i < numPlants && i < 8; i++) { // Limit to 8 plants max per variety for clarity
+                                const cx = zoneX + xOffset + (i * spacingUnits);
                                 const isSelected = selectedPlacement === p.plant;
-                                positionedDots.push(
+
+                                allDots.push(
                                   <circle
-                                    key={p.plant}
+                                    key={`${p.plant}-${i}`}
                                     cx={cx}
                                     cy={centerY}
-                                    r={isSelected ? 5 : 4}
+                                    r={isSelected ? 5 : 3.5}
                                     fill={p.color}
                                     stroke={isSelected ? "#1E3A6E" : "rgba(59,47,32,0.5)"}
                                     strokeWidth={isSelected ? 2 : 1}
-                                    opacity={selectedPlacement && !isSelected ? 0.4 : 0.9}
+                                    opacity={selectedPlacement && !isSelected ? 0.3 : 0.85}
                                     style={{ cursor: "pointer", transition: "all 0.2s" }}
                                     onClick={(e) => {
                                       e.stopPropagation();
                                       setSelectedPlacement(isSelected ? null : p.plant);
                                     }}
                                   >
-                                    <title>{p.plant} — {p.spacing ? `${p.spacing}cm spacing` : "spacing TBD"}{p.seedCount ? ` · ~${p.seedCount} seeds` : ""}</title>
+                                    <title>{p.plant} (plant {i + 1}) — {p.spacing ? `${p.spacing}cm spacing` : "spacing TBD"}</title>
                                   </circle>
                                 );
                               }
+
+                              // Move xOffset for next variety to avoid overlap
+                              xOffset += (numPlants > 0 ? numPlants * spacingUnits : 30);
                             });
 
-                            return positionedDots;
+                            return allDots;
                           });
                         })()}
 
                         {!isPath && (
-                          <text x="191" y={zoneY + zoneH * 0.5 + 3} textAnchor="middle" fontSize="8" fontFamily="'Outfit', sans-serif" fill="#3B2F20" opacity="0.5">
+                          <text x={zoneX + zoneW / 2} y={zoneY + zoneH * 0.5 + 3} textAnchor="middle" fontSize="8" fontFamily="'Outfit', sans-serif" fill="#3B2F20" opacity="0.5">
                             {zone.label}
                           </text>
                         )}
@@ -1181,7 +1210,7 @@ export default function SeedPlan() {
                   })}
 
                   {/* Scale bar */}
-                  <g transform="translate(35, 1007)">
+                  <g transform="translate(10, 1007)">
                     <rect x="0" y="0" width="100" height="3" fill="none" stroke="#8B7D6B" strokeWidth="1" />
                     <line x1="0" y1="0" x2="0" y2="6" stroke="#8B7D6B" strokeWidth="1" />
                     <line x1="100" y1="0" x2="100" y2="6" stroke="#8B7D6B" strokeWidth="1" />
