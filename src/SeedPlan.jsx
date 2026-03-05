@@ -1,5 +1,6 @@
 import { useState } from "react";
 import furrowImg from "./assets/furrow-plow.jpg";
+import { SEED_SPACING } from "./seedData.js";
 
 const SEEDS = [
   // === ORDER 1: Original (WEB-024012) ===
@@ -493,8 +494,9 @@ function buildPlacementData() {
       if (!parsed) return;
       parsed.forEach(p => {
         const seedData = SEEDS.find(s => s.name === p.plant);
-        const spacing = extractSpacing(p.detail);
-        const rows = extractRows(p.detail);
+        // Use imported spacing data from seedData.js, fall back to parsing
+        let spacing = SEED_SPACING[p.plant]?.spacing || extractSpacing(p.detail);
+        let rows = SEED_SPACING[p.plant]?.rows || extractRows(p.detail);
         const seedCount = calculateSeedCount(zone.depth, spacing, rows);
         data.push({
           zone: zone.id,
@@ -1106,7 +1108,7 @@ export default function SeedPlan() {
                           style={{ transition: "opacity 0.3s" }}
                         />
 
-                        {/* Placement dots for this zone — grouped by row */}
+                        {/* Placement dots for this zone — positioned by actual spacing */}
                         {(() => {
                           const zonePlacements = placementData.filter(p => p.zone === zone.id);
                           const groupedByRow = {};
@@ -1124,35 +1126,48 @@ export default function SeedPlan() {
                             const rowY = zoneY + rowIdx * rowH;
                             const centerY = rowY + rowH * 0.5;
 
-                            // Position dots horizontally within the row
-                            const dotSpacing = Math.max(20, (320) / (rowPlacements.length + 1));
-                            const startX = 45;
+                            // SVG: 10 units = 1 foot, zone width = 352 units (representing ~30 feet = 914cm)
+                            // Use actual spacing to position dots proportionally
+                            const zoneWidthCm = 30 * 30.48; // 30 feet in cm
+                            const svgUnitsPerCm = 352 / zoneWidthCm;
 
-                            return rowPlacements.map((p, dotIdx) => {
-                              const cx = startX + (dotIdx + 1) * dotSpacing;
-                              const cy = centerY;
-                              const isSelected = selectedPlacement === p.plant;
+                            // Calculate cumulative positions based on spacing
+                            let currentX = 20; // Start with small margin
+                            const positionedDots = [];
 
-                              return (
-                                <circle
-                                  key={p.plant}
-                                  cx={cx}
-                                  cy={cy}
-                                  r={isSelected ? 5 : 4}
-                                  fill={p.color}
-                                  stroke={isSelected ? "#1E3A6E" : "rgba(59,47,32,0.5)"}
-                                  strokeWidth={isSelected ? 2 : 1}
-                                  opacity={selectedPlacement && !isSelected ? 0.4 : 0.9}
-                                  style={{ cursor: "pointer", transition: "all 0.2s" }}
-                                  onClick={(e) => {
-                                    e.stopPropagation();
-                                    setSelectedPlacement(isSelected ? null : p.plant);
-                                  }}
-                                >
-                                  <title>{p.plant} — {p.spacing ? `${p.spacing}cm spacing` : "spacing TBD"}{p.seedCount ? ` · ~${p.seedCount} seeds` : ""}</title>
-                                </circle>
-                              );
+                            rowPlacements.forEach((p, idx) => {
+                              const spacingCm = p.spacing || 25; // Default if unknown
+                              // Position based on cumulative spacing from start of row
+                              const positionInRow = idx === 0 ? 0 :
+                                rowPlacements.slice(0, idx).reduce((sum, prev) => sum + (prev.spacing || 25), 0);
+                              const cx = 20 + (positionInRow * svgUnitsPerCm);
+
+                              // Only show if within bounds
+                              if (cx < 370) {
+                                const isSelected = selectedPlacement === p.plant;
+                                positionedDots.push(
+                                  <circle
+                                    key={p.plant}
+                                    cx={cx}
+                                    cy={centerY}
+                                    r={isSelected ? 5 : 4}
+                                    fill={p.color}
+                                    stroke={isSelected ? "#1E3A6E" : "rgba(59,47,32,0.5)"}
+                                    strokeWidth={isSelected ? 2 : 1}
+                                    opacity={selectedPlacement && !isSelected ? 0.4 : 0.9}
+                                    style={{ cursor: "pointer", transition: "all 0.2s" }}
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      setSelectedPlacement(isSelected ? null : p.plant);
+                                    }}
+                                  >
+                                    <title>{p.plant} — {p.spacing ? `${p.spacing}cm spacing` : "spacing TBD"}{p.seedCount ? ` · ~${p.seedCount} seeds` : ""}</title>
+                                  </circle>
+                                );
+                              }
                             });
+
+                            return positionedDots;
                           });
                         })()}
 
