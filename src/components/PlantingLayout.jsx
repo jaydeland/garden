@@ -36,7 +36,6 @@ function PlantingLayout({
       className={className}
       style={{
         animation: "fadeUp 0.5s ease both",
-        position: "relative",
       }}
     >
       {/* Map at 80% width, centered */}
