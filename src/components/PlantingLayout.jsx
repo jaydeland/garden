@@ -5,9 +5,9 @@ import React, { useEffect } from "react";
  *
  * Features:
  * - Centered map at 80% width
- * - Detail panel renders as centered popup modal when selectedZone is set
- * - Fixed overlay dims the entire viewport
- * - Click outside or × button to close
+ * - Detail panel renders as floating panel at top-right when selectedZone is set
+ * - No dimming overlay - popup floats above content
+ * - Click × button or Escape to close
  * - Regency aesthetic: parchment gradient, Cormorant Garamond fonts, gold accents
  */
 function PlantingLayout({
@@ -78,40 +78,22 @@ function PlantingLayout({
         </div>
       </div>
 
-      {/* Fixed overlay that covers entire viewport - highest z-index */}
+      {/* Floating popup panel at top-right - no dimming overlay */}
       {hasDetailPanel && (
         <div
           style={{
             position: "fixed",
-            top: 0,
-            left: 0,
-            width: "100vw",
-            height: "100vh",
-            backgroundColor: "rgba(26, 18, 8, 0.7)",
-            backdropFilter: "blur(4px)",
-            zIndex: 9998,
-          }}
-          onClick={() => onZoneSelect(null)}
-        />
-      )}
-
-      {/* Centered popup modal - above overlay */}
-      {hasDetailPanel && (
-        <div
-          style={{
-            position: "fixed",
-            top: "50%",
-            left: "50%",
-            transform: "translate(-50%, -50%)",
+            top: "80px",
+            right: "20px",
             zIndex: 9999,
-            width: "90%",
-            maxWidth: "520px",
-            maxHeight: "85vh",
+            width: "380px",
+            maxWidth: "calc(100vw - 40px)",
+            maxHeight: "70vh",
             overflowY: "auto",
             background: "linear-gradient(135deg, #F9EDD0 0%, #EDD9AF 100%)",
             border: "2px solid #C9960A",
             borderRadius: "6px",
-            boxShadow: "0 12px 48px rgba(0,0,0,0.5), 0 0 0 1px rgba(201,150,10,0.3)",
+            boxShadow: "0 8px 32px rgba(0,0,0,0.3), 0 0 0 1px rgba(201,150,10,0.3)",
           }}
           onClick={(e) => e.stopPropagation()}
         >
