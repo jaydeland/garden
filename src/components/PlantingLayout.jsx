@@ -1,12 +1,12 @@
-import React, { useState, useEffect, useRef } from "react";
+import React, { useEffect } from "react";
 
 /**
  * PlantingLayout — Full-width map layout for Placement tab
  *
  * Features:
  * - Centered map at 80% width
- * - Detail panel renders as popup positioned near click location
- * - Overlay covers entire document (not just viewport)
+ * - Detail panel renders as centered popup modal when selectedZone is set
+ * - Fixed overlay dims the entire viewport
  * - Click outside or × button to close
  * - Regency aesthetic: parchment gradient, Cormorant Garamond fonts, gold accents
  */
@@ -15,51 +15,9 @@ function PlantingLayout({
   onZoneSelect,
   children,
   detailPanel,
-  clickPosition,
   className = "",
 }) {
   const hasDetailPanel = selectedZone && detailPanel;
-  const modalRef = useRef(null);
-  const [modalPos, setModalPos] = useState(null);
-
-  // Calculate modal position
-  useEffect(() => {
-    if (!hasDetailPanel || !clickPosition) {
-      setModalPos(null);
-      return;
-    }
-
-    // Default position: to the right of click
-    let left = clickPosition.x + 20;
-    let top = clickPosition.y - 100; // Offset up to center vertically on click
-
-    const viewportWidth = window.innerWidth;
-    const viewportHeight = window.innerHeight;
-    const modalWidth = 480;
-    const modalHeight = 400;
-
-    // If modal would go off right edge, position to left of click
-    if (left + modalWidth > viewportWidth - 20) {
-      left = clickPosition.x - modalWidth - 20;
-    }
-
-    // Keep within left bounds
-    if (left < 20) {
-      left = 20;
-    }
-
-    // If modal would go off bottom, move it up
-    if (top + modalHeight > viewportHeight - 20) {
-      top = viewportHeight - modalHeight - 20;
-    }
-
-    // If modal would go off top, move it down
-    if (top < 20) {
-      top = 20;
-    }
-
-    setModalPos({ left, top });
-  }, [hasDetailPanel, clickPosition]);
 
   // Handle escape key to close
   useEffect(() => {
@@ -121,7 +79,7 @@ function PlantingLayout({
         </div>
       </div>
 
-      {/* Full page dim overlay - covers entire document */}
+      {/* Fixed overlay that covers entire viewport */}
       {hasDetailPanel && (
         <div
           style={{
@@ -138,18 +96,18 @@ function PlantingLayout({
         />
       )}
 
-      {/* Modal positioned near click location */}
-      {hasDetailPanel && modalPos && (
+      {/* Centered popup modal */}
+      {hasDetailPanel && (
         <div
-          ref={modalRef}
           style={{
             position: "fixed",
-            left: modalPos.left,
-            top: modalPos.top,
+            top: "50%",
+            left: "50%",
+            transform: "translate(-50%, -50%)",
             zIndex: 101,
-            width: "480px",
-            maxWidth: "calc(100vw - 40px)",
-            maxHeight: "70vh",
+            width: "90%",
+            maxWidth: "520px",
+            maxHeight: "80vh",
             overflowY: "auto",
             background: "linear-gradient(135deg, #F9EDD0 0%, #EDD9AF 100%)",
             border: "2px solid #C9960A",

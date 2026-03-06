@@ -540,7 +540,6 @@ export default function SeedPlan() {
   const [catFilter, setCatFilter] = useState("All");
   const [selectedZone, setSelectedZone] = useState(null);
   const [selectedPlacement, setSelectedPlacement] = useState(null);
-  const [zoneClickPosition, setZoneClickPosition] = useState(null); // { x, y } for modal positioning
   const [timingFilter, setTimingFilter] = useState(null); // { type: 'method'|'week', value: string }
   const [highlightMode, setHighlightMode] = useState('none'); // 'none' | 'timing' | 'seed'
   const [selectedWeek, setSelectedWeek] = useState(null);
@@ -907,12 +906,7 @@ export default function SeedPlan() {
                     const seeds = getAllSeeds(zone);
 
                     return (
-                      <g key={zone.id} onClick={(e) => {
-                        if (isPath) return;
-                        const rect = e.currentTarget.getBoundingClientRect();
-                        setZoneClickPosition({ x: e.clientX, y: e.clientY });
-                        setSelectedZone(isSelected ? null : zone.id);
-                      }} style={{ cursor: isPath ? "default" : "pointer" }}>
+                      <g key={zone.id} onClick={() => !isPath && setSelectedZone(isSelected ? null : zone.id)} style={{ cursor: isPath ? "default" : "pointer" }}>
                         {/* Zone fill */}
                         <rect
                           x="30" y={zoneY} width="352" height={zoneH}
@@ -1115,11 +1109,7 @@ export default function SeedPlan() {
 
             <PlantingLayout
               selectedZone={selectedZone}
-              onZoneSelect={(zoneId) => {
-                setSelectedZone(zoneId);
-                setZoneClickPosition(null);
-              }}
-              clickPosition={zoneClickPosition}
+              onZoneSelect={setSelectedZone}
               detailPanel={
                 selectedZone && (
                   <PlantingDetailPanel
@@ -1191,10 +1181,7 @@ export default function SeedPlan() {
                         fill={zone.fill} stroke={zone.stroke}
                         strokeWidth="1" opacity={zoneOpacity}
                         style={{ transition: "opacity 0.3s" }}
-                        onClick={(e) => {
-                          setZoneClickPosition({ x: e.clientX, y: e.clientY });
-                          setSelectedZone(selectedZone === zone.id ? null : zone.id);
-                        }}
+                        onClick={() => setSelectedZone(selectedZone === zone.id ? null : zone.id)}
                       />
 
                       {/* Zone label for paths */}
