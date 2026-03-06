@@ -1,11 +1,11 @@
-import React, { useEffect } from "react";
+import React, { useState, useEffect } from "react";
 
 /**
  * PlantingLayout — Full-width map layout for Placement tab
  *
  * Features:
  * - Centered map at 80% width
- * - Detail panel renders as floating panel at top-right when selectedZone is set
+ * - Detail panel renders as popup positioned at top of clicked zone
  * - No dimming overlay - popup floats above content
  * - Click × button or Escape to close
  * - Regency aesthetic: parchment gradient, Cormorant Garamond fonts, gold accents
@@ -15,9 +15,32 @@ function PlantingLayout({
   onZoneSelect,
   children,
   detailPanel,
+  clickPosition,
   className = "",
 }) {
   const hasDetailPanel = selectedZone && detailPanel;
+  const [popupPos, setPopupPos] = useState({ top: 80, left: '50%' });
+
+  // Calculate popup position based on click
+  useEffect(() => {
+    if (!clickPosition) return;
+
+    const popupWidth = 400;
+    const offset = 20;
+
+    // Position at the top of the clicked zone
+    let left = clickPosition.x - popupWidth / 2;
+    let top = clickPosition.y - offset;
+
+    // Keep within viewport bounds
+    if (left < 20) left = 20;
+    if (left + popupWidth > window.innerWidth - 20) {
+      left = window.innerWidth - popupWidth - 20;
+    }
+    if (top < 20) top = clickPosition.y + offset;
+
+    setPopupPos({ top, left });
+  }, [clickPosition, selectedZone]);
 
   // Handle escape key to close
   useEffect(() => {
@@ -78,17 +101,17 @@ function PlantingLayout({
         </div>
       </div>
 
-      {/* Floating popup panel at top-right - no dimming overlay */}
+      {/* Floating popup panel positioned at top of clicked zone */}
       {hasDetailPanel && (
         <div
           style={{
             position: "fixed",
-            top: "80px",
-            right: "20px",
+            top: popupPos.top,
+            left: popupPos.left,
             zIndex: 9999,
-            width: "380px",
+            width: "400px",
             maxWidth: "calc(100vw - 40px)",
-            maxHeight: "70vh",
+            maxHeight: "60vh",
             overflowY: "auto",
             background: "linear-gradient(135deg, #F9EDD0 0%, #EDD9AF 100%)",
             border: "2px solid #C9960A",

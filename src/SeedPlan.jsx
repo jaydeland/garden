@@ -540,6 +540,7 @@ export default function SeedPlan() {
   const [catFilter, setCatFilter] = useState("All");
   const [selectedZone, setSelectedZone] = useState(null);
   const [selectedPlacement, setSelectedPlacement] = useState(null);
+  const [zoneClickPosition, setZoneClickPosition] = useState(null); // { x, y } for popup positioning
   const [timingFilter, setTimingFilter] = useState(null); // { type: 'method'|'week', value: string }
   const [highlightMode, setHighlightMode] = useState('none'); // 'none' | 'timing' | 'seed'
   const [selectedWeek, setSelectedWeek] = useState(null);
@@ -906,7 +907,11 @@ export default function SeedPlan() {
                     const seeds = getAllSeeds(zone);
 
                     return (
-                      <g key={zone.id} onClick={() => !isPath && setSelectedZone(isSelected ? null : zone.id)} style={{ cursor: isPath ? "default" : "pointer" }}>
+                      <g key={zone.id} onClick={(e) => {
+                        if (isPath) return;
+                        setZoneClickPosition({ x: e.clientX, y: e.clientY });
+                        setSelectedZone(isSelected ? null : zone.id);
+                      }} style={{ cursor: isPath ? "default" : "pointer" }}>
                         {/* Zone fill */}
                         <rect
                           x="30" y={zoneY} width="352" height={zoneH}
@@ -1061,7 +1066,10 @@ export default function SeedPlan() {
                 {ZONES.filter(z => z.rows.length > 0).map(zone => (
                   <button
                     key={zone.id}
-                    onClick={() => setSelectedZone(selectedZone === zone.id ? null : zone.id)}
+                    onClick={(e) => {
+                      setZoneClickPosition({ x: e.clientX, y: e.clientY });
+                      setSelectedZone(selectedZone === zone.id ? null : zone.id);
+                    }}
                     style={{
                       display: "flex", alignItems: "center", gap: "7px",
                       padding: "8px 14px",
@@ -1109,7 +1117,11 @@ export default function SeedPlan() {
 
             <PlantingLayout
               selectedZone={selectedZone}
-              onZoneSelect={setSelectedZone}
+              onZoneSelect={(zoneId) => {
+                setSelectedZone(zoneId);
+                if (!zoneId) setZoneClickPosition(null);
+              }}
+              clickPosition={zoneClickPosition}
               detailPanel={
                 selectedZone && (
                   <PlantingDetailPanel
@@ -1181,7 +1193,10 @@ export default function SeedPlan() {
                         fill={zone.fill} stroke={zone.stroke}
                         strokeWidth="1" opacity={zoneOpacity}
                         style={{ transition: "opacity 0.3s" }}
-                        onClick={() => setSelectedZone(selectedZone === zone.id ? null : zone.id)}
+                        onClick={(e) => {
+                          setZoneClickPosition({ x: e.clientX, y: e.clientY });
+                          setSelectedZone(selectedZone === zone.id ? null : zone.id);
+                        }}
                       />
 
                       {/* Zone label for paths */}
