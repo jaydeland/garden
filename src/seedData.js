@@ -71,3 +71,669 @@ export function getSeedRows(seedName) {
   const data = SEED_SPACING[seedName];
   return data?.rows || 1;
 }
+
+// Seed timing data for Zone 6b (Norfolk County, Ontario)
+// Week numbers: 1 = Jan 1-7, 14 = early April, 20 = mid-May (last frost), 42 = mid-Oct (first frost)
+export const SEED_TIMING = {
+  // === CUT FLOWERS ===
+
+  // Poppies - direct sow early April (week 14), surface sow, harvest Jun-Jul
+  "Red Breadseed Poppy": {
+    sowDepth: "surface",
+    startMethod: "direct",
+    indoorStartWeek: null,
+    transplantWeek: null,
+    directSowWeek: 14,      // Early April - cold soil
+    harvestStartWeek: 24,   // Mid-June
+    harvestEndWeek: 28,     // Mid-July
+    notes: "Needs light to germinate - press in, do not cover"
+  },
+  "Shirley Poppy Pastel Doubles": {
+    sowDepth: "surface",
+    startMethod: "direct",
+    indoorStartWeek: null,
+    transplantWeek: null,
+    directSowWeek: 14,      // Early April - cold soil
+    harvestStartWeek: 24,   // Mid-June
+    harvestEndWeek: 28,     // Mid-July
+    notes: "Needs light to germinate - thin to 15cm"
+  },
+  "Poppy Hens & Chicks": {
+    sowDepth: "surface",
+    startMethod: "direct",
+    indoorStartWeek: null,
+    transplantWeek: null,
+    directSowWeek: 14,      // Early April - cold soil
+    harvestStartWeek: 24,   // Mid-June
+    harvestEndWeek: 28,     // Mid-July
+    notes: "Leave pods standing after petals drop"
+  },
+
+  // Zinnias - start indoors April, transplant late May, bloom Jul-frost
+  "Zinnia Lilliput Rose": {
+    sowDepth: "0.5cm",
+    startMethod: "both",
+    indoorStartWeek: 15,    // Mid-April
+    transplantWeek: 21,     // Late May (after last frost)
+    directSowWeek: 21,      // Late May (warm soil)
+    harvestStartWeek: 27,   // Early July
+    harvestEndWeek: 42,     // First frost
+    notes: "Pinch at 30cm for maximum branching"
+  },
+  "Zinnia Molotov Mix": {
+    sowDepth: "0.5cm",
+    startMethod: "both",
+    indoorStartWeek: 15,    // Mid-April
+    transplantWeek: 21,     // Late May
+    directSowWeek: 21,      // Late May
+    harvestStartWeek: 27,   // Early July
+    harvestEndWeek: 42,     // First frost
+    notes: "Pinch hard at 30cm for maximum branching"
+  },
+  "Zinnia Zinderella Lilac": {
+    sowDepth: "0.5cm",
+    startMethod: "both",
+    indoorStartWeek: 15,    // Mid-April
+    transplantWeek: 21,     // Late May
+    directSowWeek: 21,      // Late May
+    harvestStartWeek: 27,   // Early July
+    harvestEndWeek: 42,     // First frost
+    notes: "Scabiosa form - unique texture"
+  },
+  "Zinnia Peaches + Cream": {
+    sowDepth: "0.5cm",
+    startMethod: "both",
+    indoorStartWeek: 15,    // Mid-April
+    transplantWeek: 21,     // Late May
+    directSowWeek: 21,      // Late May
+    harvestStartWeek: 27,   // Early July
+    harvestEndWeek: 42,     // First frost
+    notes: "Soft doubles - succession sow every 3 weeks"
+  },
+  "Zinnia Queeny Lime Orange": {
+    sowDepth: "0.5cm",
+    startMethod: "both",
+    indoorStartWeek: 15,    // Mid-April
+    transplantWeek: 21,     // Late May
+    directSowWeek: 21,      // Late May
+    harvestStartWeek: 27,   // Early July
+    harvestEndWeek: 42,     // First frost
+    notes: "Part of Queeny series"
+  },
+  "Zinnia Queeny Lime Blotch": {
+    sowDepth: "0.5cm",
+    startMethod: "both",
+    indoorStartWeek: 15,    // Mid-April
+    transplantWeek: 21,     // Late May
+    directSowWeek: 21,      // Late May
+    harvestStartWeek: 27,   // Early July
+    harvestEndWeek: 42,     // First frost
+    notes: "Part of Queeny series"
+  },
+  "Zinnia Queeny Lemon Peach": {
+    sowDepth: "0.5cm",
+    startMethod: "both",
+    indoorStartWeek: 15,    // Mid-April
+    transplantWeek: 21,     // Late May
+    directSowWeek: 21,      // Late May
+    harvestStartWeek: 27,   // Early July
+    harvestEndWeek: 42,     // First frost
+    notes: "Part of Queeny series"
+  },
+
+  // Nigella / Love in a Mist - direct sow April in place
+  "Nigella Miss Jekyll": {
+    sowDepth: "0.25cm",
+    startMethod: "direct",
+    indoorStartWeek: null,
+    transplantWeek: null,
+    directSowWeek: 14,      // Early April
+    harvestStartWeek: 27,   // Early July
+    harvestEndWeek: 36,     // Early September
+    notes: "Do not transplant - scatter thickly, thin to 15cm"
+  },
+  "Nigella Persian Jewels": {
+    sowDepth: "0.25cm",
+    startMethod: "direct",
+    indoorStartWeek: null,
+    transplantWeek: null,
+    directSowWeek: 14,      // Early April
+    harvestStartWeek: 27,   // Early July
+    harvestEndWeek: 36,     // Early September
+    notes: "Interplant with other nigellas in drifts"
+  },
+  "Nigella Cramer's Plum": {
+    sowDepth: "0.25cm",
+    startMethod: "direct",
+    indoorStartWeek: null,
+    transplantWeek: null,
+    directSowWeek: 14,      // Early April
+    harvestStartWeek: 27,   // Early July
+    harvestEndWeek: 36,     // Early September
+    notes: "Deep moody plum tones"
+  },
+  "Love in a Mist Cramer's Plum Loco": {
+    sowDepth: "0.25cm",
+    startMethod: "direct",
+    indoorStartWeek: null,
+    transplantWeek: null,
+    directSowWeek: 14,      // Early April
+    harvestStartWeek: 27,   // Early July
+    harvestEndWeek: 36,     // Early September
+    notes: "Succession planting with Cramer's Plum"
+  },
+
+  // Snapdragons - start indoors Mar-Apr, transplant May
+  "Snapdragon Rocket Hybrids": {
+    sowDepth: "surface",
+    startMethod: "indoors",
+    indoorStartWeek: 12,    // Mid-March
+    transplantWeek: 20,     // Mid-May
+    directSowWeek: null,
+    harvestStartWeek: 24,   // Mid-June
+    harvestEndWeek: 42,     // First frost
+    notes: "Tallest (100cm) - insert canes at planting. Needs light to germinate."
+  },
+  "Snapdragon Panorama Mixed": {
+    sowDepth: "surface",
+    startMethod: "indoors",
+    indoorStartWeek: 12,    // Mid-March
+    transplantWeek: 20,     // Mid-May
+    directSowWeek: null,
+    harvestStartWeek: 24,   // Mid-June
+    harvestEndWeek: 42,     // First frost
+    notes: "Mid-height (75cm) - insert canes at planting"
+  },
+
+  // Cornflowers - start indoors Apr or direct sow May
+  "Cornflower Classic Romantic": {
+    sowDepth: "0.5cm",
+    startMethod: "both",
+    indoorStartWeek: 15,    // Mid-April
+    transplantWeek: 20,     // Mid-May
+    directSowWeek: 18,      // Late April
+    harvestStartWeek: 24,   // Mid-June
+    harvestEndWeek: 32,     // Early August
+    notes: "May sprawl - insert thin bamboo canes at planting"
+  },
+  "Cornflower Blue Diadem": {
+    sowDepth: "0.5cm",
+    startMethod: "both",
+    indoorStartWeek: 15,    // Mid-April
+    transplantWeek: 20,     // Mid-May
+    directSowWeek: 18,      // Late April
+    harvestStartWeek: 24,   // Mid-June
+    harvestEndWeek: 32,     // Early August
+    notes: "True blue - may sprawl, stake early"
+  },
+
+  // Bells of Ireland - cold stratify, start Mar-Apr
+  "Bells of Ireland": {
+    sowDepth: "0.5cm",
+    startMethod: "both",
+    indoorStartWeek: 12,    // Mid-March (cold stratify 2 weeks first)
+    transplantWeek: 20,     // Mid-May
+    directSowWeek: 15,      // Mid-April
+    harvestStartWeek: 27,   // Early July
+    harvestEndWeek: 36,     // Early September
+    notes: "Cold stratify 2 weeks before starting. Cut before calyxes brown."
+  },
+
+  // Statice (Everlasting) - start indoors Mar
+  "Statice Art Shades Mixed": {
+    sowDepth: "0.5cm",
+    startMethod: "indoors",
+    indoorStartWeek: 12,    // Mid-March
+    transplantWeek: 20,     // Mid-May
+    directSowWeek: 16,      // Late April
+    harvestStartWeek: 27,   // Early July
+    harvestEndWeek: 36,     // Early September
+    notes: "Harvest for drying when 80% open"
+  },
+
+  // Strawflower - start indoors Apr (needs light)
+  "Strawflower Mixed Colours": {
+    sowDepth: "surface",
+    startMethod: "both",
+    indoorStartWeek: 15,    // Mid-April
+    transplantWeek: 21,     // Late May
+    directSowWeek: 20,      // Mid-May
+    harvestStartWeek: 27,   // Early July
+    harvestEndWeek: 42,     // First frost
+    notes: "Needs light to germinate. Harvest when outer petals open but centre closed."
+  },
+
+  // Callistephus (Aster) - start indoors Apr
+  "Callistephus Classic Salmon Rose": {
+    sowDepth: "0.5cm",
+    startMethod: "indoors",
+    indoorStartWeek: 15,    // Mid-April
+    transplantWeek: 20,     // Mid-May
+    directSowWeek: null,
+    harvestStartWeek: 31,   // Early August
+    harvestEndWeek: 42,     // First frost
+    notes: "Late-season aster - plant in stable spot"
+  },
+
+  // African Marigold - start indoors Mar-Apr
+  "African Marigold Glow Up Gold": {
+    sowDepth: "0.5cm",
+    startMethod: "both",
+    indoorStartWeek: 13,    // Late March
+    transplantWeek: 20,     // Mid-May
+    directSowWeek: 21,      // Late May
+    harvestStartWeek: 27,   // Early July
+    harvestEndWeek: 42,     // First frost
+    notes: "Tallest marigold (90cm) - stake with robust cane"
+  },
+
+  // French Marigold - start indoors Apr
+  "French Marigold Petite Yellow": {
+    sowDepth: "0.5cm",
+    startMethod: "both",
+    indoorStartWeek: 15,    // Mid-April
+    transplantWeek: 21,     // Late May
+    directSowWeek: 21,      // Late May
+    harvestStartWeek: 27,   // Early July
+    harvestEndWeek: 42,     // First frost
+    notes: "Deters soil pests at bed edge"
+  },
+
+  // Blue Glitter Sea Holly - cold stratify, start Feb-Mar
+  "Blue Glitter Sea Holly": {
+    sowDepth: "0.5cm",
+    startMethod: "indoors",
+    indoorStartWeek: 8,     // Late February (cold stratify 4 weeks)
+    transplantWeek: 20,     // Mid-May
+    directSowWeek: 15,      // Mid-April
+    harvestStartWeek: 27,   // Early July
+    harvestEndWeek: 36,     // Early September
+    notes: "Cold stratify 4 weeks. Ensure excellent drainage - dislikes wet roots."
+  },
+
+  // Edelweiss - start indoors Feb-Mar, surface sow
+  "Edelweiss": {
+    sowDepth: "surface",
+    startMethod: "indoors",
+    indoorStartWeek: 8,     // Late February
+    transplantWeek: 20,     // Mid-May
+    directSowWeek: 15,      // Mid-April
+    harvestStartWeek: 24,   // Mid-June
+    harvestEndWeek: 32,     // Early August
+    notes: "Alpine - keep on drier side. Needs light to germinate."
+  },
+
+  // Kiwi Blue Honeywort - start indoors Mar
+  "Kiwi Blue Honeywort": {
+    sowDepth: "0.5cm",
+    startMethod: "both",
+    indoorStartWeek: 12,    // Mid-March
+    transplantWeek: 20,     // Mid-May
+    directSowWeek: 15,      // Mid-April
+    harvestStartWeek: 24,   // Mid-June
+    harvestEndWeek: 42,     // First frost
+    notes: "Unusual blue-purple bells - pollinator magnet"
+  },
+
+  // Caramel Rudbeckia - start indoors Mar-Apr
+  "Caramel Rudbeckia": {
+    sowDepth: "0.5cm",
+    startMethod: "both",
+    indoorStartWeek: 13,    // Late March
+    transplantWeek: 20,     // Mid-May
+    directSowWeek: 18,      // Late April
+    harvestStartWeek: 27,   // Early July
+    harvestEndWeek: 42,     // First frost
+    notes: "Long harvest Jul-Oct - warm caramel tones"
+  },
+
+  // Lupins (Perennials) - start indoors Mar
+  "Lupin Pink Fairy": {
+    sowDepth: "0.5cm",
+    startMethod: "indoors",
+    indoorStartWeek: 12,    // Mid-March
+    transplantWeek: 20,     // Mid-May
+    directSowWeek: 18,      // Late April
+    harvestStartWeek: 24,   // Year 2: Mid-June
+    harvestEndWeek: 28,     // Year 2: Mid-July
+    notes: "Perennial - mark permanently, do NOT pull in autumn. Blooms Year 2."
+  },
+  "Lupins Russells Red": {
+    sowDepth: "0.5cm",
+    startMethod: "indoors",
+    indoorStartWeek: 12,    // Mid-March
+    transplantWeek: 20,     // Mid-May
+    directSowWeek: 18,      // Late April
+    harvestStartWeek: 24,   // Year 2: Mid-June
+    harvestEndWeek: 28,     // Year 2: Mid-July
+    notes: "Perennial (100cm) - mark permanently, blooms Jun-Jul Year 2"
+  },
+
+  // Pyretheum Painted Daisy - start indoors Mar
+  "Pyretheum Painted Daisy": {
+    sowDepth: "0.5cm",
+    startMethod: "both",
+    indoorStartWeek: 12,    // Mid-March
+    transplantWeek: 20,     // Mid-May
+    directSowWeek: 16,      // Late April
+    harvestStartWeek: 24,   // Mid-June
+    harvestEndWeek: 32,     // Early August
+    notes: "Natural pest deterrent"
+  },
+
+  // Ozark Sundrop (Perennial) - direct sow Apr-May
+  "Ozark Sundrop": {
+    sowDepth: "0.5cm",
+    startMethod: "direct",
+    indoorStartWeek: null,
+    transplantWeek: null,
+    directSowWeek: 15,      // Mid-April
+    harvestStartWeek: 20,   // May (opens evening)
+    harvestEndWeek: 32,     // Early August
+    notes: "Perennial - opens evening-through-morning. Mark clearly."
+  },
+
+  // Pansies - start indoors Feb-Mar (early season)
+  "Pansy Chianti Shades F1": {
+    sowDepth: "0.25cm",
+    startMethod: "indoors",
+    indoorStartWeek: 8,     // Late February
+    transplantWeek: 18,     // Late April
+    directSowWeek: null,
+    harvestStartWeek: 20,   // Mid-May
+    harvestEndWeek: 28,     // Mid-July
+    notes: "Early spring colour - first to bloom"
+  },
+  "Pansy Inspire True Blue": {
+    sowDepth: "0.25cm",
+    startMethod: "indoors",
+    indoorStartWeek: 8,     // Late February
+    transplantWeek: 18,     // Late April
+    directSowWeek: null,
+    harvestStartWeek: 20,   // Mid-May
+    harvestEndWeek: 28,     // Mid-July
+    notes: "True blue - edging"
+  },
+  "Pansy Super Swiss Giants": {
+    sowDepth: "0.25cm",
+    startMethod: "indoors",
+    indoorStartWeek: 8,     // Late February
+    transplantWeek: 18,     // Late April
+    directSowWeek: null,
+    harvestStartWeek: 20,   // Mid-May
+    harvestEndWeek: 28,     // Mid-July
+    notes: "Large-faced - macro photography"
+  },
+
+  // === FOLIAGE & FILLER ===
+
+  // Bupleurum - direct sow Apr-May
+  "Bupleurum Green Gold": {
+    sowDepth: "0.25cm",
+    startMethod: "both",
+    indoorStartWeek: 12,    // Mid-March
+    transplantWeek: null,   // Do not transplant
+    directSowWeek: 15,      // Mid-April
+    harvestStartWeek: 24,   // Mid-June
+    harvestEndWeek: 32,     // Early August
+    notes: "Do not transplant - cool-soil germinator, 10-14 days"
+  },
+
+  // Cress - direct sow Apr
+  "Cress Attraxa": {
+    sowDepth: "0.5cm",
+    startMethod: "both",
+    indoorStartWeek: 13,    // Late March
+    transplantWeek: 18,     // Late April
+    directSowWeek: 15,      // Mid-April
+    harvestStartWeek: 24,   // Mid-June
+    harvestEndWeek: 32,     // Early August
+    notes: "Harvest textural seed heads before fully ripe"
+  },
+
+  // Lavender (Perennial) - start Feb-Mar, bottom heat
+  "Lavender": {
+    sowDepth: "surface",
+    startMethod: "indoors",
+    indoorStartWeek: 8,     // Late February (8+ weeks with bottom heat)
+    transplantWeek: 20,     // Mid-May
+    directSowWeek: 16,      // Late April
+    harvestStartWeek: 27,   // Year 2: Early July
+    harvestEndWeek: 32,     // Year 2: Early August
+    notes: "Perennial - needs sharp drainage. Modest bloom Y1, full flowering Y2."
+  },
+
+  // Orach Ruby Gold - start indoors Mar
+  "Orach Ruby Gold": {
+    sowDepth: "0.5cm",
+    startMethod: "both",
+    indoorStartWeek: 12,    // Mid-March
+    transplantWeek: 18,     // Late April
+    directSowWeek: 15,      // Mid-April
+    harvestStartWeek: 20,   // Mid-May (foliage)
+    harvestEndWeek: 36,     // Early September
+    notes: "Dramatic foliage - edible"
+  },
+
+  // Sedum Spirit (Perennial) - direct sow Apr-May
+  "Sedum Spirit": {
+    sowDepth: "surface",
+    startMethod: "direct",
+    indoorStartWeek: null,
+    transplantWeek: null,
+    directSowWeek: 15,      // Mid-April
+    harvestStartWeek: 31,   // Early August
+    harvestEndWeek: 42,     // Mid-October
+    notes: "Perennial succulent - mark clearly, blooms Aug-Oct"
+  },
+
+  // Utrecht Blue Millet & Wheat - direct sow May
+  "Utrecht Blue Millet & Wheat": {
+    sowDepth: "0.5cm",
+    startMethod: "both",
+    indoorStartWeek: 15,    // Mid-April
+    transplantWeek: 20,     // Mid-May
+    directSowWeek: 19,      // Early May
+    harvestStartWeek: 31,   // Early August
+    harvestEndWeek: 42,     // First frost
+    notes: "Harvest when fully blue-grey for dried arrangements"
+  },
+
+  // === KITCHEN GARDEN ===
+
+  // Tomatoes - start indoors March, transplant mid-May
+  "Superbunny Microdwarf Tomato": {
+    sowDepth: "0.5cm",
+    startMethod: "indoors",
+    indoorStartWeek: 11,    // Early March
+    transplantWeek: 20,     // Mid-May
+    directSowWeek: null,
+    harvestStartWeek: 31,   // Early August
+    harvestEndWeek: 38,     // Mid-September
+    notes: "Microdwarf (20cm) - windowsill or front edge"
+  },
+  "Brown Sugar Tomato": {
+    sowDepth: "0.5cm",
+    startMethod: "indoors",
+    indoorStartWeek: 11,    // Early March
+    transplantWeek: 20,     // Mid-May
+    directSowWeek: null,
+    harvestStartWeek: 31,   // Early August
+    harvestEndWeek: 38,     // Mid-September
+    notes: "Tall indeterminate (150cm) - use 5-foot cages"
+  },
+  "White Tomesol Tomato": {
+    sowDepth: "0.5cm",
+    startMethod: "indoors",
+    indoorStartWeek: 11,    // Early March
+    transplantWeek: 20,     // Mid-May
+    directSowWeek: null,
+    harvestStartWeek: 31,   // Early August
+    harvestEndWeek: 38,     // Mid-September
+    notes: "Tall indeterminate (150cm) - use 5-foot cages"
+  },
+  "Blueberry Dessert Tomato": {
+    sowDepth: "0.5cm",
+    startMethod: "indoors",
+    indoorStartWeek: 11,    // Early March
+    transplantWeek: 20,     // Mid-May
+    directSowWeek: null,
+    harvestStartWeek: 31,   // Early August
+    harvestEndWeek: 38,     // Mid-September
+    notes: "Tall indeterminate (150cm) - blue-black cherries"
+  },
+  "Wolverine Tomato": {
+    sowDepth: "0.5cm",
+    startMethod: "indoors",
+    indoorStartWeek: 11,    // Early March
+    transplantWeek: 20,     // Mid-May
+    directSowWeek: null,
+    harvestStartWeek: 31,   // Early August
+    harvestEndWeek: 38,     // Mid-September
+    notes: "Semi-indeterminate (120cm) - cage required"
+  },
+  "Moonglow Jewel Tomato F2": {
+    sowDepth: "0.5cm",
+    startMethod: "indoors",
+    indoorStartWeek: 11,    // Early March
+    transplantWeek: 20,     // Mid-May
+    directSowWeek: null,
+    harvestStartWeek: 31,   // Early August
+    harvestEndWeek: 38,     // Mid-September
+    notes: "F2 genetic mix - expect size variation, mark individually"
+  },
+  "Gunmetal Gray Dwarf Tomato": {
+    sowDepth: "0.5cm",
+    startMethod: "indoors",
+    indoorStartWeek: 11,    // Early March
+    transplantWeek: 20,     // Mid-May
+    directSowWeek: null,
+    harvestStartWeek: 31,   // Early August
+    harvestEndWeek: 38,     // Mid-September
+    notes: "Compact dwarf (90cm) - cage required"
+  },
+  "Candyland Tomato": {
+    sowDepth: "0.5cm",
+    startMethod: "indoors",
+    indoorStartWeek: 11,    // Early March
+    transplantWeek: 20,     // Mid-May
+    directSowWeek: null,
+    harvestStartWeek: 29,   // Mid-July
+    harvestEndWeek: 38,     // Mid-September
+    notes: "Cascading clusters of 20+ fruits - strong cage, 75cm spacing"
+  },
+
+  // Ground Cherry - start indoors Mar-Apr
+  "Ground Cherry": {
+    sowDepth: "0.25cm",
+    startMethod: "indoors",
+    indoorStartWeek: 13,    // Late March
+    transplantWeek: 20,     // Mid-May
+    directSowWeek: null,
+    harvestStartWeek: 31,   // Early August
+    harvestEndWeek: 38,     // Mid-September
+    notes: "Plant at end of row - husk fruit drops when ripe"
+  },
+
+  // Herbs - Basil (warm season)
+  "Sweet Basil": {
+    sowDepth: "0.5cm",
+    startMethod: "both",
+    indoorStartWeek: 15,    // Mid-April
+    transplantWeek: 21,     // Late May (soil > 15°C)
+    directSowWeek: 21,      // Late May
+    harvestStartWeek: 25,   // Late June
+    harvestEndWeek: 42,     // First frost
+    notes: "Collapses below 10°C - wait for warm soil"
+  },
+  "Spicy Globe Basil": {
+    sowDepth: "0.5cm",
+    startMethod: "both",
+    indoorStartWeek: 15,    // Mid-April
+    transplantWeek: 21,     // Late May (soil > 15°C)
+    directSowWeek: 21,      // Late May
+    harvestStartWeek: 25,   // Late June
+    harvestEndWeek: 42,     // First frost
+    notes: "Compact (25cm) - ornamental dome shape"
+  },
+  "Blue Spice Bush Basil": {
+    sowDepth: "0.5cm",
+    startMethod: "both",
+    indoorStartWeek: 15,    // Mid-April
+    transplantWeek: 21,     // Late May (soil > 15°C)
+    directSowWeek: 21,      // Late May
+    harvestStartWeek: 25,   // Late June
+    harvestEndWeek: 42,     // First frost
+    notes: "Blue-tinged with vanilla-anise scent"
+  },
+
+  // Rosemary (Perennial herb) - start Feb-Mar, slow germination
+  "Rosemary": {
+    sowDepth: "surface",
+    startMethod: "indoors",
+    indoorStartWeek: 8,     // Late February (3-4 weeks germination)
+    transplantWeek: 20,     // Mid-May
+    directSowWeek: null,
+    harvestStartWeek: 20,   // Mid-May (foliage)
+    harvestEndWeek: 42,     // First frost
+    notes: "Not fully hardy Zone 6b - bring indoors before Oct frost"
+  },
+
+  // Wulff Dill - direct sow May, succession
+  "Wulff Dill": {
+    sowDepth: "0.5cm",
+    startMethod: "direct",
+    indoorStartWeek: null,
+    transplantWeek: null,
+    directSowWeek: 19,      // Early May
+    harvestStartWeek: 27,   // Early July
+    harvestEndWeek: 32,     // Early August
+    notes: "Succession-sow every 3 weeks through June. Do not transplant."
+  },
+
+  // Brussels Sprouts Flower Sprout - start indoors Apr
+  "Brussels Sprouts Flower Sprout": {
+    sowDepth: "0.5cm",
+    startMethod: "indoors",
+    indoorStartWeek: 15,    // Mid-April
+    transplantWeek: 20,     // Mid-May
+    directSowWeek: null,
+    harvestStartWeek: 40,   // Early October (after first frost)
+    harvestEndWeek: 44,     // Late October
+    notes: "Harvest Oct after first frost for best flavour"
+  },
+
+  // Kew Garden Collection - varies by variety
+  "Kew Garden Collection": {
+    sowDepth: "varies",
+    startMethod: "varies",
+    indoorStartWeek: null,
+    transplantWeek: null,
+    directSowWeek: null,
+    harvestStartWeek: null,
+    harvestEndWeek: null,
+    notes: "Follow per-variety packet instructions"
+  }
+};
+
+// Helper to get timing for a seed
+export function getSeedTiming(seedName) {
+  return SEED_TIMING[seedName] || null;
+}
+
+// Helper to get all timing properties with defaults
+export function getSeedTimingWithDefaults(seedName) {
+  const timing = SEED_TIMING[seedName];
+  if (!timing) return null;
+
+  return {
+    sowDepth: timing.sowDepth || "surface",
+    startMethod: timing.startMethod || "direct",
+    indoorStartWeek: timing.indoorStartWeek,
+    transplantWeek: timing.transplantWeek,
+    directSowWeek: timing.directSowWeek,
+    harvestStartWeek: timing.harvestStartWeek,
+    harvestEndWeek: timing.harvestEndWeek,
+    notes: timing.notes
+  };
+}
