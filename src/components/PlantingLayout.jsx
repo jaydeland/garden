@@ -79,24 +79,24 @@ function PlantingLayout({
         </div>
       </div>
 
-      {/* Fixed overlay that covers entire viewport */}
+      {/* Fixed overlay that covers entire viewport - highest z-index */}
       {hasDetailPanel && (
         <div
           style={{
             position: "fixed",
             top: 0,
             left: 0,
-            right: 0,
-            bottom: 0,
-            backgroundColor: "rgba(26, 18, 8, 0.6)",
+            width: "100vw",
+            height: "100vh",
+            backgroundColor: "rgba(26, 18, 8, 0.7)",
             backdropFilter: "blur(4px)",
-            zIndex: 100,
+            zIndex: 9998,
           }}
           onClick={() => onZoneSelect(null)}
         />
       )}
 
-      {/* Centered popup modal */}
+      {/* Centered popup modal - above overlay */}
       {hasDetailPanel && (
         <div
           style={{
@@ -104,15 +104,15 @@ function PlantingLayout({
             top: "50%",
             left: "50%",
             transform: "translate(-50%, -50%)",
-            zIndex: 101,
+            zIndex: 9999,
             width: "90%",
             maxWidth: "520px",
-            maxHeight: "80vh",
+            maxHeight: "85vh",
             overflowY: "auto",
             background: "linear-gradient(135deg, #F9EDD0 0%, #EDD9AF 100%)",
             border: "2px solid #C9960A",
             borderRadius: "6px",
-            boxShadow: "0 12px 48px rgba(0,0,0,0.4), 0 0 0 1px rgba(201,150,10,0.3)",
+            boxShadow: "0 12px 48px rgba(0,0,0,0.5), 0 0 0 1px rgba(201,150,10,0.3)",
           }}
           onClick={(e) => e.stopPropagation()}
         >
@@ -135,7 +135,7 @@ function PlantingLayout({
               display: "flex",
               alignItems: "center",
               justifyContent: "center",
-              zIndex: 102,
+              zIndex: 10000,
               transition: "all 0.2s ease",
               boxShadow: "0 2px 8px rgba(0,0,0,0.15)",
             }}
