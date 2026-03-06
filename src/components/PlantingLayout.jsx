@@ -6,7 +6,7 @@ import React, { useState, useEffect, useRef } from "react";
  * Features:
  * - Centered map at 80% width
  * - Detail panel renders as popup positioned near click location
- * - Fixed overlay dims the entire viewport
+ * - Overlay covers entire document (not just viewport)
  * - Click outside or × button to close
  * - Regency aesthetic: parchment gradient, Cormorant Garamond fonts, gold accents
  */
@@ -20,37 +20,37 @@ function PlantingLayout({
 }) {
   const hasDetailPanel = selectedZone && detailPanel;
   const modalRef = useRef(null);
-  const [isPositioned, setIsPositioned] = useState(false);
+  const [modalPos, setModalPos] = useState(null);
 
-  // Calculate and set modal position
+  // Calculate modal position
   useEffect(() => {
-    if (!hasDetailPanel || !clickPosition || !modalRef.current) {
-      setIsPositioned(false);
+    if (!hasDetailPanel || !clickPosition) {
+      setModalPos(null);
       return;
     }
 
-    const modal = modalRef.current;
-    const modalRect = modal.getBoundingClientRect();
-    const viewportWidth = window.innerWidth;
-    const viewportHeight = window.innerHeight;
-
     // Default position: to the right of click
     let left = clickPosition.x + 20;
-    let top = clickPosition.y - 50; // Offset up slightly
+    let top = clickPosition.y - 100; // Offset up to center vertically on click
+
+    const viewportWidth = window.innerWidth;
+    const viewportHeight = window.innerHeight;
+    const modalWidth = 480;
+    const modalHeight = 400;
 
     // If modal would go off right edge, position to left of click
-    if (left + modalRect.width > viewportWidth - 20) {
-      left = clickPosition.x - modalRect.width - 20;
+    if (left + modalWidth > viewportWidth - 20) {
+      left = clickPosition.x - modalWidth - 20;
     }
 
-    // If modal would go off left edge, align to left edge
+    // Keep within left bounds
     if (left < 20) {
       left = 20;
     }
 
     // If modal would go off bottom, move it up
-    if (top + modalRect.height > viewportHeight - 20) {
-      top = viewportHeight - modalRect.height - 20;
+    if (top + modalHeight > viewportHeight - 20) {
+      top = viewportHeight - modalHeight - 20;
     }
 
     // If modal would go off top, move it down
@@ -58,9 +58,7 @@ function PlantingLayout({
       top = 20;
     }
 
-    modal.style.left = `${left}px`;
-    modal.style.top = `${top}px`;
-    setIsPositioned(true);
+    setModalPos({ left, top });
   }, [hasDetailPanel, clickPosition]);
 
   // Handle escape key to close
@@ -74,18 +72,6 @@ function PlantingLayout({
     document.addEventListener("keydown", handleKeyDown);
     return () => document.removeEventListener("keydown", handleKeyDown);
   }, [hasDetailPanel, onZoneSelect]);
-
-  // Prevent body scroll when modal is open
-  useEffect(() => {
-    if (hasDetailPanel) {
-      document.body.style.overflow = "hidden";
-    } else {
-      document.body.style.overflow = "";
-    }
-    return () => {
-      document.body.style.overflow = "";
-    };
-  }, [hasDetailPanel]);
 
   return (
     <div
@@ -135,15 +121,15 @@ function PlantingLayout({
         </div>
       </div>
 
-      {/* Fixed overlay that covers entire viewport */}
+      {/* Full page dim overlay - covers entire document */}
       {hasDetailPanel && (
         <div
           style={{
             position: "fixed",
             top: 0,
             left: 0,
-            width: "100vw",
-            height: "100vh",
+            right: 0,
+            bottom: 0,
             backgroundColor: "rgba(26, 18, 8, 0.6)",
             backdropFilter: "blur(4px)",
             zIndex: 100,
@@ -153,22 +139,22 @@ function PlantingLayout({
       )}
 
       {/* Modal positioned near click location */}
-      {hasDetailPanel && (
+      {hasDetailPanel && modalPos && (
         <div
           ref={modalRef}
           style={{
             position: "fixed",
+            left: modalPos.left,
+            top: modalPos.top,
             zIndex: 101,
-            maxWidth: "480px",
-            width: "90%",
-            maxHeight: "80vh",
+            width: "480px",
+            maxWidth: "calc(100vw - 40px)",
+            maxHeight: "70vh",
             overflowY: "auto",
             background: "linear-gradient(135deg, #F9EDD0 0%, #EDD9AF 100%)",
             border: "2px solid #C9960A",
             borderRadius: "6px",
             boxShadow: "0 12px 48px rgba(0,0,0,0.4), 0 0 0 1px rgba(201,150,10,0.3)",
-            opacity: isPositioned ? 1 : 0,
-            transition: "opacity 0.2s ease",
           }}
           onClick={(e) => e.stopPropagation()}
         >
