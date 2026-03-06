@@ -540,7 +540,7 @@ export default function SeedPlan() {
   const [catFilter, setCatFilter] = useState("All");
   const [selectedZone, setSelectedZone] = useState(null);
   const [selectedPlacement, setSelectedPlacement] = useState(null);
-  const [zoneClickPosition, setZoneClickPosition] = useState(null); // { x, y } for popup positioning
+  const [zonePosition, setZonePosition] = useState(null); // { x, y } screen position of zone top for popup
   const [timingFilter, setTimingFilter] = useState(null); // { type: 'method'|'week', value: string }
   const [highlightMode, setHighlightMode] = useState('none'); // 'none' | 'timing' | 'seed'
   const [selectedWeek, setSelectedWeek] = useState(null);
@@ -909,7 +909,16 @@ export default function SeedPlan() {
                     return (
                       <g key={zone.id} onClick={(e) => {
                         if (isPath) return;
-                        setZoneClickPosition({ x: e.clientX, y: e.clientY });
+                        // Calculate zone's top position on screen for layout tab SVG
+                        const svg = e.target.closest('svg');
+                        if (svg) {
+                          const svgRect = svg.getBoundingClientRect();
+                          const viewBoxWidth = 400;
+                          const scale = svgRect.width / viewBoxWidth;
+                          const zoneTopY = svgRect.top + zoneY * scale;
+                          const zoneCenterX = svgRect.left + (30 + 352 / 2) * scale;
+                          setZonePosition({ x: zoneCenterX, y: zoneTopY });
+                        }
                         setSelectedZone(isSelected ? null : zone.id);
                       }} style={{ cursor: isPath ? "default" : "pointer" }}>
                         {/* Zone fill */}
@@ -1067,7 +1076,8 @@ export default function SeedPlan() {
                   <button
                     key={zone.id}
                     onClick={(e) => {
-                      setZoneClickPosition({ x: e.clientX, y: e.clientY });
+                      const rect = e.currentTarget.getBoundingClientRect();
+                      setZonePosition({ x: rect.left + rect.width / 2, y: rect.top });
                       setSelectedZone(selectedZone === zone.id ? null : zone.id);
                     }}
                     style={{
@@ -1119,9 +1129,9 @@ export default function SeedPlan() {
               selectedZone={selectedZone}
               onZoneSelect={(zoneId) => {
                 setSelectedZone(zoneId);
-                if (!zoneId) setZoneClickPosition(null);
+                if (!zoneId) setZonePosition(null);
               }}
-              clickPosition={zoneClickPosition}
+              zonePosition={zonePosition}
               detailPanel={
                 selectedZone && (
                   <PlantingDetailPanel
@@ -1194,7 +1204,17 @@ export default function SeedPlan() {
                         strokeWidth="1" opacity={zoneOpacity}
                         style={{ transition: "opacity 0.3s" }}
                         onClick={(e) => {
-                          setZoneClickPosition({ x: e.clientX, y: e.clientY });
+                          // Calculate zone's top position on screen
+                          const svg = e.target.closest('svg');
+                          if (svg) {
+                            const svgRect = svg.getBoundingClientRect();
+                            const viewBoxWidth = 720; // viewBox width
+                            const viewBoxY = -20; // viewBox y offset
+                            const scale = svgRect.width / viewBoxWidth;
+                            const zoneTopY = svgRect.top + (zoneY - viewBoxY) * scale;
+                            const zoneCenterX = svgRect.left + (zoneX + zoneW / 2) * scale;
+                            setZonePosition({ x: zoneCenterX, y: zoneTopY });
+                          }
                           setSelectedZone(selectedZone === zone.id ? null : zone.id);
                         }}
                       />

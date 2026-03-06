@@ -5,7 +5,7 @@ import React, { useState, useEffect } from "react";
  *
  * Features:
  * - Centered map at 80% width
- * - Detail panel renders as popup positioned at top of clicked zone
+ * - Detail panel renders as popup positioned at top of selected zone
  * - No dimming overlay - popup floats above content
  * - Click × button or Escape to close
  * - Regency aesthetic: parchment gradient, Cormorant Garamond fonts, gold accents
@@ -15,32 +15,32 @@ function PlantingLayout({
   onZoneSelect,
   children,
   detailPanel,
-  clickPosition,
+  zonePosition,
   className = "",
 }) {
   const hasDetailPanel = selectedZone && detailPanel;
-  const [popupPos, setPopupPos] = useState({ top: 80, left: '50%' });
+  const [popupPos, setPopupPos] = useState({ top: 100, left: '50%' });
 
-  // Calculate popup position based on click
+  // Calculate popup position based on zone's top position
   useEffect(() => {
-    if (!clickPosition) return;
+    if (!zonePosition) return;
 
     const popupWidth = 400;
-    const offset = 20;
+    const offsetAbove = 10; // Small gap above the zone
 
-    // Position at the top of the clicked zone
-    let left = clickPosition.x - popupWidth / 2;
-    let top = clickPosition.y - offset;
+    // Position at the top of the zone
+    let left = zonePosition.x - popupWidth / 2;
+    let top = zonePosition.y - offsetAbove;
 
     // Keep within viewport bounds
     if (left < 20) left = 20;
     if (left + popupWidth > window.innerWidth - 20) {
       left = window.innerWidth - popupWidth - 20;
     }
-    if (top < 20) top = clickPosition.y + offset;
+    if (top < 20) top = zonePosition.y + 20; // If too high, position below
 
     setPopupPos({ top, left });
-  }, [clickPosition, selectedZone]);
+  }, [zonePosition, selectedZone]);
 
   // Handle escape key to close
   useEffect(() => {
@@ -101,7 +101,7 @@ function PlantingLayout({
         </div>
       </div>
 
-      {/* Floating popup panel positioned at top of clicked zone */}
+      {/* Floating popup panel positioned at top of selected zone */}
       {hasDetailPanel && (
         <div
           style={{
