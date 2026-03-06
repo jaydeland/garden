@@ -909,7 +909,7 @@ export default function SeedPlan() {
                     return (
                       <g key={zone.id} onClick={(e) => {
                         if (isPath) return;
-                        // Calculate zone's top position on screen for layout tab SVG
+                        // Calculate zone and row position on screen for layout tab SVG
                         const svg = e.target.closest('svg');
                         if (svg) {
                           const svgRect = svg.getBoundingClientRect();
@@ -917,7 +917,18 @@ export default function SeedPlan() {
                           const scale = svgRect.width / viewBoxWidth;
                           const zoneTopY = svgRect.top + zoneY * scale;
                           const zoneCenterX = svgRect.left + (30 + 352 / 2) * scale;
-                          setZonePosition({ x: zoneCenterX, y: zoneTopY });
+
+                          // Calculate which row was clicked
+                          const clickY = e.clientY;
+                          const relativeY = clickY - zoneTopY;
+                          const totalRows = zone.rows.length || 1;
+                          const rowH = zoneH * scale / totalRows;
+                          const rowIndex = Math.max(0, Math.min(totalRows - 1, Math.floor(relativeY / rowH)));
+
+                          // Calculate row's center Y position
+                          const rowCenterY = zoneTopY + rowIndex * rowH + rowH / 2;
+
+                          setZonePosition({ x: zoneCenterX, y: rowCenterY });
                         }
                         setSelectedZone(isSelected ? null : zone.id);
                       }} style={{ cursor: isPath ? "default" : "pointer" }}>
@@ -1204,7 +1215,7 @@ export default function SeedPlan() {
                         strokeWidth="1" opacity={zoneOpacity}
                         style={{ transition: "opacity 0.3s" }}
                         onClick={(e) => {
-                          // Calculate zone's top position on screen
+                          // Calculate zone and row position on screen
                           const svg = e.target.closest('svg');
                           if (svg) {
                             const svgRect = svg.getBoundingClientRect();
@@ -1213,7 +1224,18 @@ export default function SeedPlan() {
                             const scale = svgRect.width / viewBoxWidth;
                             const zoneTopY = svgRect.top + (zoneY - viewBoxY) * scale;
                             const zoneCenterX = svgRect.left + (zoneX + zoneW / 2) * scale;
-                            setZonePosition({ x: zoneCenterX, y: zoneTopY });
+
+                            // Calculate which row was clicked
+                            const clickY = e.clientY;
+                            const relativeY = clickY - zoneTopY;
+                            const totalRows = zone.rows.length || 1;
+                            const rowH = zoneH * scale / totalRows;
+                            const rowIndex = Math.max(0, Math.min(totalRows - 1, Math.floor(relativeY / rowH)));
+
+                            // Calculate row's center Y position
+                            const rowCenterY = zoneTopY + rowIndex * rowH + rowH / 2;
+
+                            setZonePosition({ x: zoneCenterX, y: rowCenterY });
                           }
                           setSelectedZone(selectedZone === zone.id ? null : zone.id);
                         }}

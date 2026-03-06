@@ -21,23 +21,27 @@ function PlantingLayout({
   const hasDetailPanel = selectedZone && detailPanel;
   const [popupPos, setPopupPos] = useState({ top: 100, left: '50%' });
 
-  // Calculate popup position based on zone's top position
+  // Calculate popup position based on row's center position
   useEffect(() => {
     if (!zonePosition) return;
 
     const popupWidth = 400;
-    const offsetAbove = 10; // Small gap above the zone
+    const popupHeight = 300; // Estimated popup height
 
-    // Position at the top of the zone
+    // Position popup centered on the row (row center is at zonePosition.y)
     let left = zonePosition.x - popupWidth / 2;
-    let top = zonePosition.y - offsetAbove;
+    // Center vertically on the row: popup middle aligns with row center
+    let top = zonePosition.y - popupHeight / 2;
 
     // Keep within viewport bounds
     if (left < 20) left = 20;
     if (left + popupWidth > window.innerWidth - 20) {
       left = window.innerWidth - popupWidth - 20;
     }
-    if (top < 20) top = zonePosition.y + 20; // If too high, position below
+    if (top < 20) top = 20; // Keep at least 20px from top
+    if (top + popupHeight > window.innerHeight - 20) {
+      top = window.innerHeight - popupHeight - 20; // Keep within bottom bounds
+    }
 
     setPopupPos({ top, left });
   }, [zonePosition, selectedZone]);
