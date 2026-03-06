@@ -26,21 +26,21 @@ function PlantingLayout({
     if (!zonePosition) return;
 
     const popupWidth = 400;
-    const popupHeight = 300; // Estimated popup height
+    const offsetAbove = 20; // Gap above the row
 
-    // Position popup centered on the row (row center is at zonePosition.y)
+    // Position popup centered horizontally on the zone
     let left = zonePosition.x - popupWidth / 2;
-    // Center vertically on the row: popup middle aligns with row center
-    let top = zonePosition.y - popupHeight / 2;
+    // Position above the row (row center Y minus offset)
+    let top = zonePosition.y - offsetAbove;
 
     // Keep within viewport bounds
     if (left < 20) left = 20;
     if (left + popupWidth > window.innerWidth - 20) {
       left = window.innerWidth - popupWidth - 20;
     }
-    if (top < 20) top = 20; // Keep at least 20px from top
-    if (top + popupHeight > window.innerHeight - 20) {
-      top = window.innerHeight - popupHeight - 20; // Keep within bottom bounds
+    // If too close to top, position below instead
+    if (top < 80) {
+      top = zonePosition.y + offsetAbove + 20;
     }
 
     setPopupPos({ top, left });
