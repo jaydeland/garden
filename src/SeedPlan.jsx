@@ -540,8 +540,7 @@ export default function SeedPlan() {
   const [catFilter, setCatFilter] = useState("All");
   const [selectedZone, setSelectedZone] = useState(null);
   const [selectedPlacement, setSelectedPlacement] = useState(null);
-  const [zonePosition, setZonePosition] = useState(null); // { x, y } screen position of zone top for popup
-  const [timingFilter, setTimingFilter] = useState(null); // { type: 'method'|'week', value: string }
+const [timingFilter, setTimingFilter] = useState(null); // { type: 'method'|'week', value: string }
   const [highlightMode, setHighlightMode] = useState('none'); // 'none' | 'timing' | 'seed'
   const [selectedWeek, setSelectedWeek] = useState(null);
 
@@ -907,29 +906,8 @@ export default function SeedPlan() {
                     const seeds = getAllSeeds(zone);
 
                     return (
-                      <g key={zone.id} onClick={(e) => {
+                      <g key={zone.id} onClick={() => {
                         if (isPath) return;
-                        // Calculate zone and row position on screen for layout tab SVG
-                        const svg = e.target.closest('svg');
-                        if (svg) {
-                          const svgRect = svg.getBoundingClientRect();
-                          const viewBoxWidth = 400;
-                          const scale = svgRect.width / viewBoxWidth;
-                          const zoneTopY = svgRect.top + zoneY * scale;
-                          const zoneCenterX = svgRect.left + (30 + 352 / 2) * scale;
-
-                          // Calculate which row was clicked
-                          const clickY = e.clientY;
-                          const relativeY = clickY - zoneTopY;
-                          const totalRows = zone.rows.length || 1;
-                          const rowH = zoneH * scale / totalRows;
-                          const rowIndex = Math.max(0, Math.min(totalRows - 1, Math.floor(relativeY / rowH)));
-
-                          // Calculate row's center Y position
-                          const rowCenterY = zoneTopY + rowIndex * rowH + rowH / 2;
-
-                          setZonePosition({ x: zoneCenterX, y: rowCenterY });
-                        }
                         setSelectedZone(isSelected ? null : zone.id);
                       }} style={{ cursor: isPath ? "default" : "pointer" }}>
                         {/* Zone fill */}
@@ -1086,9 +1064,7 @@ export default function SeedPlan() {
                 {ZONES.filter(z => z.rows.length > 0).map(zone => (
                   <button
                     key={zone.id}
-                    onClick={(e) => {
-                      const rect = e.currentTarget.getBoundingClientRect();
-                      setZonePosition({ x: rect.left + rect.width / 2, y: rect.top });
+                    onClick={() => {
                       setSelectedZone(selectedZone === zone.id ? null : zone.id);
                     }}
                     style={{
@@ -1140,9 +1116,7 @@ export default function SeedPlan() {
               selectedZone={selectedZone}
               onZoneSelect={(zoneId) => {
                 setSelectedZone(zoneId);
-                if (!zoneId) setZonePosition(null);
               }}
-              zonePosition={zonePosition}
               detailPanel={
                 selectedZone && (
                   <PlantingDetailPanel
@@ -1214,29 +1188,7 @@ export default function SeedPlan() {
                         fill={zone.fill} stroke={zone.stroke}
                         strokeWidth="1" opacity={zoneOpacity}
                         style={{ transition: "opacity 0.3s" }}
-                        onClick={(e) => {
-                          // Calculate zone and row position on screen
-                          const svg = e.target.closest('svg');
-                          if (svg) {
-                            const svgRect = svg.getBoundingClientRect();
-                            const viewBoxWidth = 720; // viewBox width
-                            const viewBoxY = -20; // viewBox y offset
-                            const scale = svgRect.width / viewBoxWidth;
-                            const zoneTopY = svgRect.top + (zoneY - viewBoxY) * scale;
-                            const zoneCenterX = svgRect.left + (zoneX + zoneW / 2) * scale;
-
-                            // Calculate which row was clicked
-                            const clickY = e.clientY;
-                            const relativeY = clickY - zoneTopY;
-                            const totalRows = zone.rows.length || 1;
-                            const rowH = zoneH * scale / totalRows;
-                            const rowIndex = Math.max(0, Math.min(totalRows - 1, Math.floor(relativeY / rowH)));
-
-                            // Calculate row's center Y position
-                            const rowCenterY = zoneTopY + rowIndex * rowH + rowH / 2;
-
-                            setZonePosition({ x: zoneCenterX, y: rowCenterY });
-                          }
+                        onClick={() => {
                           setSelectedZone(selectedZone === zone.id ? null : zone.id);
                         }}
                       />
