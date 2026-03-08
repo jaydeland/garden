@@ -1,12 +1,12 @@
-import React, { useState, useEffect } from "react";
+import React, { useEffect, useRef } from "react";
 
 /**
- * PlantingLayout — Full-width map layout for Placement tab
+ * PlantingLayout — Full-width map with inline zone detail accordion
  *
  * Features:
- * - Centered map at 80% width
- * - Detail panel renders as popup positioned at top of selected zone
- * - No dimming overlay - popup floats above content
+ * - Map takes full width at all times
+ * - Clicking a zone expands an inline detail panel below the map
+ * - Detail panel slides in with a smooth animation, spanning full width
  * - Click × button or Escape to close
  * - Regency aesthetic: parchment gradient, Cormorant Garamond fonts, gold accents
  */
@@ -15,36 +15,10 @@ function PlantingLayout({
   onZoneSelect,
   children,
   detailPanel,
-  zonePosition,
   className = "",
 }) {
   const hasDetailPanel = selectedZone && detailPanel;
-  const [popupPos, setPopupPos] = useState({ top: 100, left: '50%' });
-
-  // Calculate popup position based on row's center position
-  useEffect(() => {
-    if (!zonePosition) return;
-
-    const popupWidth = 400;
-    const offsetAbove = 20; // Gap above the row
-
-    // Position popup centered horizontally on the zone
-    let left = zonePosition.x - popupWidth / 2;
-    // Position above the row (row center Y minus offset)
-    let top = zonePosition.y - offsetAbove;
-
-    // Keep within viewport bounds
-    if (left < 20) left = 20;
-    if (left + popupWidth > window.innerWidth - 20) {
-      left = window.innerWidth - popupWidth - 20;
-    }
-    // If too close to top, position below instead
-    if (top < 80) {
-      top = zonePosition.y + offsetAbove + 20;
-    }
-
-    setPopupPos({ top, left });
-  }, [zonePosition, selectedZone]);
+  const detailRef = useRef(null);
 
   // Handle escape key to close
   useEffect(() => {
@@ -53,74 +27,62 @@ function PlantingLayout({
         onZoneSelect(null);
       }
     };
-
     document.addEventListener("keydown", handleKeyDown);
     return () => document.removeEventListener("keydown", handleKeyDown);
   }, [hasDetailPanel, onZoneSelect]);
 
+  // Scroll detail panel into view when it opens
+  useEffect(() => {
+    if (hasDetailPanel && detailRef.current) {
+      detailRef.current.scrollIntoView({ behavior: "smooth", block: "nearest" });
+    }
+  }, [hasDetailPanel, selectedZone]);
+
   return (
-    <div
-      className={className}
-      style={{
-        animation: "fadeUp 0.5s ease both",
-      }}
-    >
-      {/* Map at 80% width, centered */}
+    <div className={className} style={{ animation: "fadeUp 0.5s ease both" }}>
+      {/* Lane label above map */}
       <div
         style={{
-          width: "80%",
-          maxWidth: "1000px",
-          margin: "0 auto",
+          textAlign: "center",
+          fontFamily: "'Cormorant SC', serif",
+          fontSize: "14px",
+          letterSpacing: "3px",
+          color: "#8B6A18",
+          marginBottom: "6px",
         }}
       >
-        {/* Lane label above map */}
-        <div
-          style={{
-            textAlign: "center",
-            fontFamily: "'Cormorant SC', serif",
-            fontSize: "14px",
-            letterSpacing: "3px",
-            color: "#8B6A18",
-            marginBottom: "6px",
-          }}
-        >
-          Lane
-        </div>
-
-        {/* Children (SVG map) */}
-        {children}
-
-        {/* Orientation label below map */}
-        <div
-          style={{
-            textAlign: "center",
-            fontFamily: "'Cormorant SC', serif",
-            fontSize: "14px",
-            letterSpacing: "3px",
-            color: "#8B6A18",
-            marginTop: "6px",
-          }}
-        >
-          Farm fields to the South & East →
-        </div>
+        Lane
       </div>
 
-      {/* Floating popup panel positioned at top of selected zone */}
+      {/* Full-width SVG map */}
+      {children}
+
+      {/* Orientation label below map */}
+      <div
+        style={{
+          textAlign: "center",
+          fontFamily: "'Cormorant SC', serif",
+          fontSize: "14px",
+          letterSpacing: "3px",
+          color: "#8B6A18",
+          marginTop: "6px",
+        }}
+      >
+        Farm fields to the South & East →
+      </div>
+
+      {/* Inline zone detail — expands below map when a zone is selected */}
       {hasDetailPanel && (
         <div
+          ref={detailRef}
           style={{
-            position: "fixed",
-            top: popupPos.top,
-            left: popupPos.left,
-            zIndex: 9999,
-            width: "400px",
-            maxWidth: "calc(100vw - 40px)",
-            maxHeight: "60vh",
-            overflowY: "auto",
-            background: "linear-gradient(135deg, #F9EDD0 0%, #EDD9AF 100%)",
+            marginTop: "16px",
+            background: "linear-gradient(160deg, #F9EDD0 0%, #EDD9AF 100%)",
             border: "2px solid #C9960A",
-            borderRadius: "6px",
-            boxShadow: "0 8px 32px rgba(0,0,0,0.3), 0 0 0 1px rgba(201,150,10,0.3)",
+            borderRadius: "4px",
+            boxShadow: "0 4px 24px rgba(0,0,0,0.18), 0 0 0 1px rgba(201,150,10,0.15)",
+            animation: "fadeUp 0.25s ease both",
+            position: "relative",
           }}
           onClick={(e) => e.stopPropagation()}
         >
@@ -129,8 +91,8 @@ function PlantingLayout({
             onClick={() => onZoneSelect(null)}
             style={{
               position: "absolute",
-              top: "8px",
-              right: "8px",
+              top: "12px",
+              right: "12px",
               width: "28px",
               height: "28px",
               borderRadius: "50%",
@@ -143,9 +105,9 @@ function PlantingLayout({
               display: "flex",
               alignItems: "center",
               justifyContent: "center",
-              zIndex: 10000,
+              zIndex: 10,
               transition: "all 0.2s ease",
-              boxShadow: "0 2px 8px rgba(0,0,0,0.15)",
+              boxShadow: "0 2px 8px rgba(0,0,0,0.12)",
             }}
             onMouseEnter={(e) => {
               e.currentTarget.style.background = "rgba(255,250,235,1)";
@@ -159,7 +121,7 @@ function PlantingLayout({
             ×
           </button>
 
-          <div style={{ padding: "20px" }}>{detailPanel}</div>
+          <div style={{ padding: "24px" }}>{detailPanel}</div>
         </div>
       )}
     </div>

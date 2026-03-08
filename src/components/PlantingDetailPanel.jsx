@@ -1,33 +1,62 @@
-import { SEED_SPACING } from "../seedData.js";
+import { SEED_SPACING, SEED_TIMING } from "../seedData.js";
+import { weekToDate, getHarvestWindow } from "../seedTiming.js";
+
+// Extract a seed's height and detail text from the full placement string by name
+function extractFromPlacement(seedName, placement) {
+  if (!placement) return { height: null, detail: null };
+  const escaped = seedName.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+  // Match: SeedName (height): description — stop at next entry (". Capital") or end
+  const r = new RegExp(`${escaped}\\s*\\(([^)]+)\\):\\s*(.+?)(?=\\.\\s+[A-Z]|$)`, "is");
+  const m = placement.match(r);
+  if (!m) return { height: null, detail: null };
+  return { height: m[1].trim(), detail: m[2].trim() };
+}
 
 // Extract spacing from placement detail text
 function extractSpacing(detail) {
+  if (!detail) return null;
   const spacingMatch = detail.match(/(?:space|spacing|thin to)\s*(?:[-–to]?\s*)?(\d+)\s*cm/i);
   return spacingMatch ? parseInt(spacingMatch[1], 10) : null;
 }
 
-// Get sowing method from detail text
-function getMethod(detail) {
-  if (/direct sow/i.test(detail)) return "Direct sow";
-  if (/surface|light to germinate/i.test(detail)) return "Surface sow";
-  if (/start indoors|transplant|cold-stratify/i.test(detail)) return "Start indoors";
-  return "Sow";
-}
+// Build structured sowing steps from SEED_TIMING data
+function buildSowingSteps(timing) {
+  if (!timing) return [];
+  const steps = [];
 
-// Get timing week or month from detail text
-function getTiming(detail) {
-  const weekMatch = detail.match(/Week\s*(\d+)/i);
-  if (weekMatch) return `Week ${weekMatch[1]}`;
+  if (timing.startMethod === "indoors" || timing.startMethod === "both") {
+    steps.push({
+      label: `Start indoors — ${weekToDate(timing.indoorStartWeek)}`,
+      type: "indoor",
+    });
+  }
 
-  const monthMatch = detail.match(/\b(Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)\b/i);
-  if (monthMatch) return monthMatch[1];
+  if ((timing.startMethod === "direct" || timing.startMethod === "both") && timing.directSowWeek) {
+    const depthNote = timing.sowDepth === "surface"
+      ? " (surface, needs light)"
+      : timing.sowDepth ? ` at ${timing.sowDepth}` : "";
+    steps.push({
+      label: `Direct sow — ${weekToDate(timing.directSowWeek)}${depthNote}`,
+      type: "direct",
+    });
+  }
 
-  if (/early\s+apr/i.test(detail)) return "Early Apr";
-  if (/late\s+may/i.test(detail)) return "Late May";
-  if (/last frost/i.test(detail)) return "After last frost";
-  if (/cold soil/i.test(detail)) return "Cold soil";
+  if (timing.transplantWeek) {
+    steps.push({
+      label: `Transplant outdoors — ${weekToDate(timing.transplantWeek)}`,
+      type: "transplant",
+    });
+  }
 
-  return null;
+  if (timing.harvestStartWeek) {
+    const harvest = getHarvestWindow(timing);
+    steps.push({
+      label: `Harvest — ${harvest.label}`,
+      type: "harvest",
+    });
+  }
+
+  return steps;
 }
 
 // Build sowing timeline data
@@ -35,9 +64,15 @@ function buildTimeline() {
   const months = ["Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct"];
   const currentMonth = new Date().toLocaleString("default", { month: "short" });
   const currentIndex = months.indexOf(currentMonth);
-
   return { months, currentIndex };
 }
+
+const STEP_COLORS = {
+  indoor: { dot: "#1E3A6E", text: "#1E3A6E" },
+  direct: { dot: "#5A8B3A", text: "#3A6B22" },
+  transplant: { dot: "#C9960A", text: "#8B6A18" },
+  harvest: { dot: "#8B2020", text: "#6B1818" },
+};
 
 export default function PlantingDetailPanel({ zone, placementData, onSeedClick, selectedSeed }) {
   if (!zone) return null;
@@ -51,37 +86,41 @@ export default function PlantingDetailPanel({ zone, placementData, onSeedClick, 
 
   return (
     <div style={{
-      background: "rgba(255,255,255,0.9)",
-      border: "1px solid rgba(196,168,130,0.4)",
-      borderRadius: "3px",
-      padding: "20px",
       fontFamily: "'Cormorant Garamond', 'Georgia', serif",
-      boxShadow: "0 4px 20px rgba(26,18,8,0.08)",
+      display: "grid",
+      gridTemplateColumns: "1fr 320px",
+      gridTemplateRows: "auto 1fr",
+      gap: "0 32px",
     }}>
-      {/* Zone Header */}
+      {/* Zone Header — spans both columns */}
       <div style={{
+        gridColumn: "1 / -1",
         borderBottom: "2px solid #1A1208",
-        paddingBottom: "12px",
-        marginBottom: "16px",
+        paddingBottom: "14px",
+        marginBottom: "18px",
+        display: "flex",
+        alignItems: "baseline",
+        gap: "20px",
+        flexWrap: "wrap",
       }}>
         <h3 style={{
           fontFamily: "'Cormorant SC', serif",
-          fontSize: "20px",
+          fontSize: "21px",
           fontWeight: 600,
           letterSpacing: "2px",
-          margin: "0 0 8px",
+          margin: 0,
           color: "#1A1208",
+          paddingRight: "36px", // space for × button
         }}>
           {zone.label}
         </h3>
         <div style={{
           fontFamily: "'Outfit', sans-serif",
-          fontSize: "13px",
+          fontSize: "12px",
           letterSpacing: "1px",
           color: "#8B6A18",
-          marginBottom: "8px",
         }}>
-          {zoneWidth}' × {zoneDepth}' = {sqFt} sq ft · {varietyCount} varieties
+          {zoneWidth}′ × {zoneDepth}′ &nbsp;·&nbsp; {sqFt} sq ft &nbsp;·&nbsp; {varietyCount} {varietyCount === 1 ? "variety" : "varieties"}
         </div>
         <p style={{
           fontSize: "15px",
@@ -89,107 +128,159 @@ export default function PlantingDetailPanel({ zone, placementData, onSeedClick, 
           color: "#6B5020",
           lineHeight: 1.6,
           margin: 0,
+          flexBasis: "100%",
         }}>
           {zone.note}
         </p>
       </div>
 
-      {/* Placement Cards by Row */}
+      {/* Left column: Planting Plan by Row */}
       <div style={{ marginBottom: "20px" }}>
         {zone.rows.map((row, rowIdx) => {
-          const entries = (() => {
-            const regex = /([A-Z][a-zA-Z\s&'+-]+(?:,\s*[A-Z][a-zA-Z\s&'+-]+)*)\s*(?:\(all\s+)?(\d+(?:[–-]\d+)?\s*cm)\)?:\s*([^:]+?(?=,\s*[A-Z]|\n|$))/gs;
-            const matches = [];
-            let m;
-            while ((m = regex.exec(row.placement)) !== null) {
-              const plantNamesStr = m[1].trim();
-              const detail = (m[3] || '').trim();
-              const plantNames = plantNamesStr.split(',').map(n => n.trim()).filter(n => n);
-              plantNames.forEach(name => {
-                matches.push({ name, detail, height: m[2] });
-              });
-            }
-            return matches;
-          })();
-
-          if (entries.length === 0) return null;
+          const seeds = row.seeds || [];
+          if (seeds.length === 0) return null;
 
           return (
-            <div key={rowIdx} style={{ marginBottom: "16px" }}>
+            <div key={rowIdx} style={{ marginBottom: "20px" }}>
               <div style={{
                 fontFamily: "'Outfit', sans-serif",
-                fontSize: "12px",
-                letterSpacing: "1px",
+                fontSize: "11px",
+                letterSpacing: "1.5px",
                 textTransform: "uppercase",
                 color: "#8B6A18",
-                marginBottom: "8px",
+                marginBottom: "10px",
                 borderBottom: "1px solid rgba(196,168,130,0.25)",
                 paddingBottom: "4px",
               }}>
                 {row.label}
               </div>
-              <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
-                {entries.map((entry, ei) => {
-                  const seedData = placementData?.find(p => p.plant === entry.name);
-                  const spacing = SEED_SPACING[entry.name]?.spacing || extractSpacing(entry.detail);
-                  const method = getMethod(entry.detail);
-                  const timing = getTiming(entry.detail);
 
-                  const isSelected = selectedSeed === entry.name;
+              <div style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
+                {seeds.map((seedName, ei) => {
+                  const { height, detail } = extractFromPlacement(seedName, row.placement);
+                  const timing = SEED_TIMING[seedName];
+                  const spacing = SEED_SPACING[seedName]?.spacing || extractSpacing(detail);
+                  const sowingSteps = buildSowingSteps(timing);
+                  const hasTiming = sowingSteps.length > 0;
+                  const isSelected = selectedSeed === seedName;
 
                   return (
                     <button
                       key={ei}
-                      onClick={() => onSeedClick(entry.name)}
+                      onClick={() => onSeedClick(seedName)}
                       style={{
                         textAlign: "left",
-                        padding: "12px",
+                        padding: "14px",
                         background: isSelected
                           ? "linear-gradient(145deg, #1E3A6E, #152D57)"
-                          : "rgba(248,243,235,0.7)",
-                        border: isSelected ? "1px solid #1E3A6E" : "1px solid rgba(196,168,130,0.3)",
-                        borderRadius: "2px",
+                          : "rgba(248,243,235,0.8)",
+                        border: isSelected ? "1px solid #1E3A6E" : "1px solid rgba(196,168,130,0.35)",
+                        borderRadius: "3px",
                         cursor: "pointer",
                         transition: "all 0.2s ease",
                         width: "100%",
                       }}
                       onMouseEnter={e => {
-                        if (!isSelected) {
-                          e.currentTarget.style.background = "rgba(196,168,130,0.2)";
-                        }
+                        if (!isSelected) e.currentTarget.style.background = "rgba(196,168,130,0.2)";
                       }}
                       onMouseLeave={e => {
-                        if (!isSelected) {
-                          e.currentTarget.style.background = "rgba(248,243,235,0.7)";
-                        }
+                        if (!isSelected) e.currentTarget.style.background = "rgba(248,243,235,0.8)";
                       }}
                     >
+                      {/* Plant name + height */}
                       <div style={{
-                        fontFamily: "'Cormorant Garamond', serif",
+                        fontFamily: "'Cormorant SC', serif",
                         fontSize: "16px",
                         fontWeight: 600,
                         color: isSelected ? "#F5EDD0" : "#1A1208",
-                        marginBottom: "4px",
+                        marginBottom: hasTiming || spacing ? "10px" : 0,
+                        display: "flex",
+                        alignItems: "baseline",
+                        gap: "8px",
                       }}>
-                        {entry.name}
+                        {seedName}
+                        {height && (
+                          <span style={{
+                            fontFamily: "'Outfit', sans-serif",
+                            fontSize: "11px",
+                            letterSpacing: "0.5px",
+                            color: isSelected ? "rgba(245,237,208,0.55)" : "#8B6A18",
+                            fontWeight: 400,
+                          }}>
+                            {height}
+                          </span>
+                        )}
                       </div>
-                      <div style={{
-                        fontFamily: "'Outfit', sans-serif",
-                        fontSize: "12px",
-                        letterSpacing: "0.5px",
-                        color: isSelected ? "rgba(245,237,208,0.9)" : "#6B5020",
-                        marginBottom: "4px",
-                      }}>
-                        {[method, timing, spacing ? `${spacing}cm` : null].filter(Boolean).join(" · ") || "Sowing details"}
-                      </div>
-                      {entry.detail && (
+
+                      {/* Structured sowing + harvest steps */}
+                      {hasTiming && (
+                        <div style={{ marginBottom: spacing ? "8px" : 0 }}>
+                          {sowingSteps.map((step, si) => {
+                            const colors = STEP_COLORS[step.type] || STEP_COLORS.indoor;
+                            return (
+                              <div key={si} style={{
+                                fontFamily: "'Outfit', sans-serif",
+                                fontSize: "12px",
+                                letterSpacing: "0.3px",
+                                color: isSelected ? "rgba(245,237,208,0.9)" : colors.text,
+                                display: "flex",
+                                alignItems: "center",
+                                gap: "7px",
+                                marginBottom: si < sowingSteps.length - 1 ? "3px" : 0,
+                                lineHeight: 1.4,
+                              }}>
+                                <span style={{
+                                  width: "6px",
+                                  height: "6px",
+                                  borderRadius: "50%",
+                                  background: isSelected ? "rgba(245,237,208,0.6)" : colors.dot,
+                                  flexShrink: 0,
+                                }} />
+                                {step.label}
+                              </div>
+                            );
+                          })}
+                        </div>
+                      )}
+
+                      {/* Spacing */}
+                      {spacing && (
+                        <div style={{
+                          fontFamily: "'Outfit', sans-serif",
+                          fontSize: "11px",
+                          letterSpacing: "0.5px",
+                          color: isSelected ? "rgba(245,237,208,0.6)" : "#8B6A18",
+                          marginBottom: detail || timing?.notes ? "8px" : 0,
+                        }}>
+                          Space {spacing}cm apart
+                        </div>
+                      )}
+
+                      {/* Placement detail text */}
+                      {detail && (
                         <div style={{
                           fontSize: "13px",
                           fontStyle: "italic",
-                          color: isSelected ? "rgba(245,237,208,0.85)" : "#7A5C1E",
-                          lineHeight: 1.5,
+                          color: isSelected ? "rgba(245,237,208,0.8)" : "#7A5C1E",
+                          lineHeight: 1.55,
+                          borderTop: "1px solid",
+                          borderColor: isSelected ? "rgba(245,237,208,0.12)" : "rgba(196,168,130,0.25)",
+                          paddingTop: "8px",
                         }}>
-                          {entry.detail.length > 120 ? entry.detail.slice(0, 120) + "…" : entry.detail}
+                          {detail}
+                        </div>
+                      )}
+
+                      {/* Cultivation notes from SEED_TIMING */}
+                      {timing?.notes && (
+                        <div style={{
+                          fontFamily: "'Outfit', sans-serif",
+                          fontSize: "11px",
+                          color: isSelected ? "rgba(245,237,208,0.65)" : "#8B6A18",
+                          marginTop: "6px",
+                          fontStyle: "italic",
+                        }}>
+                          ✦ {timing.notes}
                         </div>
                       )}
                     </button>
@@ -201,11 +292,11 @@ export default function PlantingDetailPanel({ zone, placementData, onSeedClick, 
         })}
       </div>
 
-      {/* Sowing Timeline Bar */}
+      {/* Right column: Sowing Timeline */}
       <div style={{
-        borderTop: "2px solid #1A1208",
-        paddingTop: "16px",
-        marginTop: "20px",
+        borderLeft: "1px solid rgba(196,168,130,0.4)",
+        paddingLeft: "24px",
+        alignSelf: "start",
       }}>
         <div style={{
           fontFamily: "'Outfit', sans-serif",

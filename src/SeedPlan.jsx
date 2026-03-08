@@ -686,7 +686,7 @@ export default function SeedPlan() {
         ))}
       </div>
 
-      <div style={{ padding: "24px", maxWidth: "1200px", margin: "0 auto" }}>
+      <div style={{ padding: "24px", maxWidth: activeTab === "placement" ? "none" : "1200px", margin: "0 auto" }}>
 
         {/* === TIMELINE === */}
         {activeTab === "timeline" && (
