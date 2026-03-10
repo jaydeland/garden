@@ -23,13 +23,11 @@ function PlantingLayout({
   // Handle escape key to close
   useEffect(() => {
     const handleKeyDown = (e) => {
-      if (e.key === "Escape" && hasDetailPanel) {
-        onZoneSelect(null);
-      }
+      if (e.key === "Escape" && selectedZone) onZoneSelect(null);
     };
     document.addEventListener("keydown", handleKeyDown);
     return () => document.removeEventListener("keydown", handleKeyDown);
-  }, [hasDetailPanel, onZoneSelect]);
+  }, [selectedZone, onZoneSelect]);
 
   // Scroll detail panel into view when it opens
   useEffect(() => {
@@ -103,6 +101,7 @@ function PlantingLayout({
               lineHeight: "1",
               cursor: "pointer",
               display: "flex",
+              flexDirection: "column",
               alignItems: "center",
               justifyContent: "center",
               zIndex: 10,

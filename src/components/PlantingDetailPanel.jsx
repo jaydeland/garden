@@ -77,12 +77,13 @@ const STEP_COLORS = {
 export default function PlantingDetailPanel({ zone, placementData, onSeedClick, selectedSeed }) {
   if (!zone) return null;
 
-  const { months, currentIndex } = buildTimeline();
-  const zoneDepth = zone.depth || 0;
-  const zoneWidth = 30; // feet
-  const sqFt = zoneDepth * zoneWidth;
-  const allSeeds = zone.rows.flatMap(r => r.seeds || []);
-  const varietyCount = allSeeds.length;
+  const currentWeek = Math.ceil(
+    (new Date("2026-03-07") - new Date(new Date("2026-03-07").getFullYear(), 0, 1)) / (7 * 24 * 60 * 60 * 1000)
+  );
+
+  const allSeeds    = zone.rows.flatMap(r => r.seeds || []);
+  const sqFt        = zone.depth * 30;
+  const urgentActions = getCurrentActions(zone, currentWeek);
 
   return (
     <div style={{
@@ -164,6 +165,14 @@ export default function PlantingDetailPanel({ zone, placementData, onSeedClick, 
                   const hasTiming = sowingSteps.length > 0;
                   const isSelected = selectedSeed === seedName;
 
+                  // Build the summary pill row
+                  const pills = [
+                    method,
+                    sowMon,
+                    spacing ? `${spacing} cm apart` : null,
+                    timing?.harvestStartWeek ? `Harvest ${weekToDate(timing.harvestStartWeek)}` : null,
+                  ].filter(Boolean);
+
                   return (
                     <button
                       key={ei}
@@ -177,8 +186,9 @@ export default function PlantingDetailPanel({ zone, placementData, onSeedClick, 
                         border: isSelected ? "1px solid #1E3A6E" : "1px solid rgba(196,168,130,0.35)",
                         borderRadius: "3px",
                         cursor: "pointer",
-                        transition: "all 0.2s ease",
                         width: "100%",
+                        borderRadius: "2px",
+                        transition: "transform 0.15s ease",
                       }}
                       onMouseEnter={e => {
                         if (!isSelected) e.currentTarget.style.background = "rgba(196,168,130,0.2)";
@@ -282,7 +292,32 @@ export default function PlantingDetailPanel({ zone, placementData, onSeedClick, 
                         }}>
                           ✦ {timing.notes}
                         </div>
-                      )}
+
+                        {/* Harvest callout — highlighted separately */}
+                        {harvest && (
+                          <div style={{
+                            padding: "6px 9px",
+                            background: isSelected
+                              ? "rgba(45,122,58,0.3)"
+                              : "rgba(45,122,58,0.08)",
+                            border: isSelected
+                              ? "1px solid rgba(45,122,58,0.5)"
+                              : "1px solid rgba(45,122,58,0.2)",
+                            borderRadius: "2px",
+                            fontFamily: "'Outfit', sans-serif",
+                            fontSize: "11px",
+                            color: isSelected ? "rgba(245,237,208,0.9)" : "#2D7A3A",
+                            letterSpacing: "0.3px",
+                          }}>
+                            ✂ {harvest}
+                          </div>
+                        )}
+
+                        {/* Season bar — only for selected plant */}
+                        {isSelected && timing && (
+                          <SeasonBar timing={timing} accent={`linear-gradient(90deg, ${SEED_SPACING[entry.name] ? "#2D7A3A" : "#5B8A3A"}, #1A5228)`} />
+                        )}
+                      </div>
                     </button>
                   );
                 })}
@@ -370,16 +405,80 @@ export default function PlantingDetailPanel({ zone, placementData, onSeedClick, 
         </div>
         {currentIndex >= 0 && (
           <div style={{
-            fontSize: "12px",
-            fontStyle: "italic",
-            color: "#7A5C1E",
-            textAlign: "center",
-            marginTop: "8px",
+            padding: "14px 20px 18px",
+            borderTop: "1px solid rgba(196,168,130,0.35)",
           }}>
-            We are in {months[currentIndex]} — {currentIndex < 2 ? "The first whispers of the Season" : currentIndex < 5 ? "Society begins to stir" : "The grand debut"}
+            <div style={{
+              fontFamily: "'Outfit', sans-serif",
+              fontSize: "11px",
+              letterSpacing: "2px",
+              textTransform: "uppercase",
+              color: "#8B6A18",
+              marginBottom: "10px",
+            }}>
+              Zone Season — {weekToDate(earliestSow)} through {weekToDate(latestHarvest)}
+            </div>
+            {/* Stack a bar per seed for a mini gantt feel */}
+            {allSeeds.slice(0, 8).map(seedName => {
+              const t = getSeedTimingWithDefaults(seedName);
+              if (!t) return null;
+              const { start: ss, end: se } = SEASON_WEEKS;
+              const span = se - ss;
+              const toP = w => Math.max(0, Math.min(100, ((w - ss) / span) * 100));
+              const sowW = t.startMethod === "direct" ? t.directSowWeek : t.indoorStartWeek;
+              const sowE = t.transplantWeek || (sowW ? sowW + 3 : null);
+              const isThisSeed = selectedSeed === seedName;
+
+              return (
+                <div key={seedName} style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "4px" }}>
+                  <div style={{
+                    fontFamily: "'Outfit', sans-serif",
+                    fontSize: "10px",
+                    color: isThisSeed ? "#1E3A6E" : "#8B6A18",
+                    fontWeight: isThisSeed ? 700 : 400,
+                    width: "140px",
+                    flexShrink: 0,
+                    overflow: "hidden",
+                    textOverflow: "ellipsis",
+                    whiteSpace: "nowrap",
+                  }}>
+                    {seedName}
+                  </div>
+                  <div style={{ flex: 1, position: "relative", height: "6px", background: "rgba(196,168,130,0.15)", borderRadius: "3px" }}>
+                    {sowW && sowE && (
+                      <div style={{
+                        position: "absolute",
+                        left: `${toP(sowW)}%`,
+                        width: `${Math.max(2, toP(sowE) - toP(sowW))}%`,
+                        height: "100%",
+                        background: "#C9960A",
+                        borderRadius: "3px",
+                        opacity: 0.8,
+                      }} />
+                    )}
+                    {t.harvestStartWeek && t.harvestEndWeek && (
+                      <div style={{
+                        position: "absolute",
+                        left: `${toP(t.harvestStartWeek)}%`,
+                        width: `${Math.max(2, toP(t.harvestEndWeek) - toP(t.harvestStartWeek))}%`,
+                        height: "100%",
+                        background: "#2D7A3A",
+                        borderRadius: "3px",
+                        opacity: 0.65,
+                      }} />
+                    )}
+                  </div>
+                </div>
+              );
+            })}
+            {allSeeds.length > 8 && (
+              <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: "10px", color: "#A89474", marginTop: "4px", fontStyle: "italic" }}>
+                + {allSeeds.length - 8} more — click each plant card above to see its timeline.
+              </div>
+            )}
           </div>
-        )}
-      </div>
+        );
+      })()}
     </div>
   );
 }
