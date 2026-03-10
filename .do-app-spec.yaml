@@ -1,0 +1,14 @@
+name: garden-delands
+domains:
+  - domain: garden.delands.ca
+    type: PRIMARY
+static_sites:
+  - name: garden
+    github:
+      repo: jaydeland/garden
+      branch: main
+      deploy_on_push: true
+    build_command: npm run build
+    output_dir: dist
+    routes:
+      - path: /
