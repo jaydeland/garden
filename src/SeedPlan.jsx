@@ -554,7 +554,7 @@ export default function SeedPlan() {
   return (
     <div style={{
       fontFamily: "'Cormorant Garamond', 'Georgia', serif",
-      background: "linear-gradient(178deg, #F9EDD0 0%, #EDD9AF 25%, #E2C88A 60%, #D4B574 100%)",
+      background: "linear-gradient(178deg, #FDF6E8 0%, #F7EDD0 25%, #F0DFB0 60%, #E8CE8E 100%)",
       minHeight: "100vh",
       color: "#1A1208",
       position: "relative",
