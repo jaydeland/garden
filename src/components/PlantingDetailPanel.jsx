@@ -1,168 +1,78 @@
-import { SEED_SPACING, getSeedTimingWithDefaults } from "../seedData.js";
-import { weekToDate, getSowingWindow, getHarvestWindow } from "../seedTiming.js";
+import { SEED_SPACING, SEED_TIMING } from "../seedData.js";
+import { weekToDate, getHarvestWindow } from "../seedTiming.js";
 
-// ─── helpers ───────────────────────────────────────────────────────────────
-
-// Parse the first sowing month from a placement detail string
-function getSowMonth(detail) {
-  if (/direct sow.*?early\s+ap/i.test(detail)) return "Early Apr";
-  if (/direct sow.*?apr/i.test(detail))        return "Apr";
-  if (/direct sow.*?may/i.test(detail))        return "May";
-  if (/start indoors.*?feb/i.test(detail))     return "Feb";
-  if (/start indoors.*?mar/i.test(detail))     return "Mar";
-  if (/start indoors.*?apr/i.test(detail))     return "Apr";
-  const m = detail.match(/\b(Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)\b/i);
-  return m ? m[1] : null;
+// Extract a seed's height and detail text from the full placement string by name
+function extractFromPlacement(seedName, placement) {
+  if (!placement) return { height: null, detail: null };
+  const escaped = seedName.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+  // Match: SeedName (height): description — stop at next entry (". Capital") or end
+  const r = new RegExp(`${escaped}\\s*\\(([^)]+)\\):\\s*(.+?)(?=\\.\\s+[A-Z]|$)`, "is");
+  const m = placement.match(r);
+  if (!m) return { height: null, detail: null };
+  return { height: m[1].trim(), detail: m[2].trim() };
 }
 
-// Extract a harvest snippet from a placement detail string
-function getHarvestNote(detail) {
-  const m = detail.match(/harvest[^;.—\n]{5,80}/i);
-  return m ? m[0].trim() : null;
+// Extract spacing from placement detail text
+function extractSpacing(detail) {
+  if (!detail) return null;
+  const spacingMatch = detail.match(/(?:space|spacing|thin to)\s*(?:[-–to]?\s*)?(\d+)\s*cm/i);
+  return spacingMatch ? parseInt(spacingMatch[1], 10) : null;
 }
 
-// Get primary sowing method label
-function getMethod(detail) {
-  if (/direct sow/i.test(detail))               return "Direct sow";
-  if (/surface[- ]sow|surface sow/i.test(detail)) return "Surface sow";
-  if (/broadcast/i.test(detail))                return "Broadcast";
-  if (/start indoors/i.test(detail))            return "Start indoors";
-  return "Sow";
+// Build structured sowing steps from SEED_TIMING data
+function buildSowingSteps(timing) {
+  if (!timing) return [];
+  const steps = [];
+
+  if (timing.startMethod === "indoors" || timing.startMethod === "both") {
+    steps.push({
+      label: `Start indoors — ${weekToDate(timing.indoorStartWeek)}`,
+      type: "indoor",
+    });
+  }
+
+  if ((timing.startMethod === "direct" || timing.startMethod === "both") && timing.directSowWeek) {
+    const depthNote = timing.sowDepth === "surface"
+      ? " (surface, needs light)"
+      : timing.sowDepth ? ` at ${timing.sowDepth}` : "";
+    steps.push({
+      label: `Direct sow — ${weekToDate(timing.directSowWeek)}${depthNote}`,
+      type: "direct",
+    });
+  }
+
+  if (timing.transplantWeek) {
+    steps.push({
+      label: `Transplant outdoors — ${weekToDate(timing.transplantWeek)}`,
+      type: "transplant",
+    });
+  }
+
+  if (timing.harvestStartWeek) {
+    const harvest = getHarvestWindow(timing);
+    steps.push({
+      label: `Harvest — ${harvest.label}`,
+      type: "harvest",
+    });
+  }
+
+  return steps;
 }
 
-// Convert a week number to a short label e.g. "Wk 10 · Early Mar"
-function weekLabel(w) {
-  if (!w) return null;
-  return `Wk ${w} · ${weekToDate(w)}`;
+// Build sowing timeline data
+function buildTimeline() {
+  const months = ["Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct"];
+  const currentMonth = new Date().toLocaleString("default", { month: "short" });
+  const currentIndex = months.indexOf(currentMonth);
+  return { months, currentIndex };
 }
 
-// ─── TODO ──────────────────────────────────────────────────────────────────
-// getCurrentActions — returns an array of urgent/upcoming actions for this zone.
-//
-// Each action: { urgency: "now"|"soon"|"upcoming", plant: string, action: string }
-// "now"      = within ±1 week of currentWeek  (do this immediately)
-// "soon"     = within +4 weeks                (prep/watch)
-// "upcoming" = within +8 weeks                (on the horizon)
-//
-// Trade-offs to consider:
-//   - Should "now" fire for direct sow seeds when soil is still frozen? (Zone 6b
-//     typically has frost until late April; poppies want cold soil, others don't.)
-//   - Should you surface perennial seeds that were already started (e.g., Lavender
-//     indoorStartWeek=8 when currentWeek=10) as "missed" or quietly skip them?
-//   - Tomatoes are started Week 14 indoors — worth flagging in Week 10 as "soon"?
-//
-// Fill in the function body (5–10 lines) to return a filtered, sorted action list.
-// Use: getSeedTimingWithDefaults(seedName) → { startMethod, indoorStartWeek,
-//       directSowWeek, transplantWeek, harvestStartWeek, harvestEndWeek }
-// and: weekToDate(weekNum) → "Early March" style labels
-
-function getCurrentActions(zone, currentWeek) {
-  const actions = [];
-
-  // TODO: Implement this function.
-  // Example skeleton — replace with your logic:
-  //
-  // zone.rows.forEach(row => {
-  //   row.seeds.forEach(seedName => {
-  //     const timing = getSeedTimingWithDefaults(seedName);
-  //     if (!timing) return;
-  //     const startWeek = timing.startMethod === "direct"
-  //       ? timing.directSowWeek
-  //       : timing.indoorStartWeek;
-  //     if (!startWeek) return;
-  //     const weeksAway = startWeek - currentWeek;
-  //     // determine urgency based on weeksAway, push to actions
-  //   });
-  // });
-  //
-  // return actions.sort(...);
-
-  return actions;
-}
-
-// ─── Sowing + Harvest mini-timeline bar ────────────────────────────────────
-// Week 1 = Jan 1; Week 52 = late Dec
-// We show Feb (wk 6) → Oct (wk 42) — the active garden season
-const SEASON_WEEKS = { start: 6, end: 42 }; // Feb → Oct frost
-
-function SeasonBar({ timing, accent }) {
-  if (!timing) return null;
-
-  const { start: seasonStart, end: seasonEnd } = SEASON_WEEKS;
-  const span = seasonEnd - seasonStart;
-
-  const toPercent = (w) => Math.max(0, Math.min(100, ((w - seasonStart) / span) * 100));
-
-  // Sow window
-  const sowStart = timing.startMethod === "direct" ? timing.directSowWeek : timing.indoorStartWeek;
-  const sowEnd   = timing.transplantWeek || (sowStart ? sowStart + 3 : null);
-
-  // Harvest window
-  const hStart = timing.harvestStartWeek;
-  const hEnd   = timing.harvestEndWeek;
-
-  const currentWeek = Math.ceil((new Date("2026-03-07") - new Date(new Date("2026-03-07").getFullYear(), 0, 1)) / (7 * 24 * 60 * 60 * 1000));
-
-  return (
-    <div style={{ marginTop: "10px" }}>
-      {/* Track */}
-      <div style={{ position: "relative", height: "10px", background: "rgba(196,168,130,0.15)", borderRadius: "4px", margin: "0 0 4px" }}>
-        {/* Sow bar */}
-        {sowStart && sowEnd && (
-          <div style={{
-            position: "absolute",
-            left: `${toPercent(sowStart)}%`,
-            width: `${toPercent(sowEnd) - toPercent(sowStart)}%`,
-            height: "100%",
-            background: "linear-gradient(90deg, #C9960A, #8B6A18)",
-            borderRadius: "4px",
-            opacity: 0.85,
-          }} />
-        )}
-        {/* Harvest bar */}
-        {hStart && hEnd && (
-          <div style={{
-            position: "absolute",
-            left: `${toPercent(hStart)}%`,
-            width: `${toPercent(hEnd) - toPercent(hStart)}%`,
-            height: "100%",
-            background: accent || "linear-gradient(90deg, #2D7A3A, #1A5228)",
-            borderRadius: "4px",
-            opacity: 0.7,
-          }} />
-        )}
-        {/* Today marker */}
-        <div style={{
-          position: "absolute",
-          left: `${toPercent(currentWeek)}%`,
-          top: "-3px",
-          bottom: "-3px",
-          width: "2px",
-          background: "#1E3A6E",
-          borderRadius: "1px",
-        }} />
-      </div>
-      {/* Month labels */}
-      <div style={{ display: "flex", justifyContent: "space-between", fontFamily: "'Outfit', sans-serif", fontSize: "9px", color: "#A89474", letterSpacing: "0.5px" }}>
-        {["Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct"].map(m => <span key={m}>{m}</span>)}
-      </div>
-      {/* Legend */}
-      <div style={{ display: "flex", gap: "12px", marginTop: "4px", fontFamily: "'Outfit', sans-serif", fontSize: "10px", color: "#8B6A18" }}>
-        <span style={{ display: "flex", alignItems: "center", gap: "4px" }}>
-          <span style={{ display: "inline-block", width: "10px", height: "6px", background: "linear-gradient(90deg,#C9960A,#8B6A18)", borderRadius: "2px" }} /> Sow
-        </span>
-        <span style={{ display: "flex", alignItems: "center", gap: "4px" }}>
-          <span style={{ display: "inline-block", width: "10px", height: "6px", background: accent || "linear-gradient(90deg,#2D7A3A,#1A5228)", borderRadius: "2px", opacity: 0.7 }} /> Harvest
-        </span>
-        <span style={{ display: "flex", alignItems: "center", gap: "4px" }}>
-          <span style={{ display: "inline-block", width: "2px", height: "10px", background: "#1E3A6E", borderRadius: "1px" }} /> Today
-        </span>
-      </div>
-    </div>
-  );
-}
-
-// ─── Main component ─────────────────────────────────────────────────────────
+const STEP_COLORS = {
+  indoor: { dot: "#1E3A6E", text: "#1E3A6E" },
+  direct: { dot: "#5A8B3A", text: "#3A6B22" },
+  transplant: { dot: "#C9960A", text: "#8B6A18" },
+  harvest: { dot: "#8B2020", text: "#6B1818" },
+};
 
 export default function PlantingDetailPanel({ zone, placementData, onSeedClick, selectedSeed }) {
   if (!zone) return null;
@@ -177,25 +87,31 @@ export default function PlantingDetailPanel({ zone, placementData, onSeedClick, 
 
   return (
     <div style={{
-      background: "linear-gradient(160deg, #FAEFD8 0%, #F0E0B8 100%)",
-      border: "2px solid rgba(196,168,130,0.5)",
-      borderRadius: "4px",
-      fontFamily: "'Cormorant Garamond', Georgia, serif",
+      fontFamily: "'Cormorant Garamond', 'Georgia', serif",
+      display: "grid",
+      gridTemplateColumns: "1fr 320px",
+      gridTemplateRows: "auto 1fr",
+      gap: "0 32px",
     }}>
-
-      {/* ── Zone header ── */}
+      {/* Zone Header — spans both columns */}
       <div style={{
-        padding: "20px 20px 14px",
-        borderBottom: "1px solid rgba(196,168,130,0.35)",
+        gridColumn: "1 / -1",
+        borderBottom: "2px solid #1A1208",
+        paddingBottom: "14px",
+        marginBottom: "18px",
+        display: "flex",
+        alignItems: "baseline",
+        gap: "20px",
+        flexWrap: "wrap",
       }}>
         <h3 style={{
           fontFamily: "'Cormorant SC', serif",
-          fontSize: "20px",
+          fontSize: "21px",
           fontWeight: 600,
           letterSpacing: "2px",
+          margin: 0,
           color: "#1A1208",
-          margin: "0 0 6px",
-          paddingRight: "32px", // clear the close button
+          paddingRight: "36px", // space for × button
         }}>
           {zone.label}
         </h3>
@@ -204,101 +120,50 @@ export default function PlantingDetailPanel({ zone, placementData, onSeedClick, 
           fontSize: "12px",
           letterSpacing: "1px",
           color: "#8B6A18",
-          marginBottom: "8px",
         }}>
-          30′ × {zone.depth}′ = {sqFt} sq ft · {allSeeds.length} varieties
+          {zoneWidth}′ × {zoneDepth}′ &nbsp;·&nbsp; {sqFt} sq ft &nbsp;·&nbsp; {varietyCount} {varietyCount === 1 ? "variety" : "varieties"}
         </div>
-        <p style={{ fontSize: "15px", fontStyle: "italic", color: "#6B5020", lineHeight: 1.6, margin: 0 }}>
+        <p style={{
+          fontSize: "15px",
+          fontStyle: "italic",
+          color: "#6B5020",
+          lineHeight: 1.6,
+          margin: 0,
+          flexBasis: "100%",
+        }}>
           {zone.note}
         </p>
       </div>
 
-      {/* ── What to do now (populated once the TODO is implemented) ── */}
-      {urgentActions.length > 0 && (
-        <div style={{
-          padding: "14px 20px",
-          borderBottom: "1px solid rgba(196,168,130,0.3)",
-          background: "rgba(30,58,110,0.06)",
-        }}>
-          <div style={{
-            fontFamily: "'Outfit', sans-serif",
-            fontSize: "11px",
-            letterSpacing: "2px",
-            textTransform: "uppercase",
-            color: "#1E3A6E",
-            marginBottom: "8px",
-          }}>
-            ◈ This Week's Tasks
-          </div>
-          <div style={{ display: "flex", flexDirection: "column", gap: "6px" }}>
-            {urgentActions.map((a, i) => (
-              <div key={i} style={{
-                display: "flex",
-                alignItems: "flex-start",
-                gap: "8px",
-                padding: "8px 10px",
-                background: a.urgency === "now"
-                  ? "linear-gradient(145deg, #1E3A6E, #152D57)"
-                  : "rgba(255,255,255,0.55)",
-                border: a.urgency === "now" ? "1px solid #1E3A6E" : "1px solid rgba(196,168,130,0.3)",
-                borderRadius: "2px",
-              }}>
-                <span style={{ fontSize: "14px", flexShrink: 0 }}>
-                  {a.urgency === "now" ? "🌱" : a.urgency === "soon" ? "📅" : "🔭"}
-                </span>
-                <div>
-                  <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: "12px", fontWeight: 700, color: a.urgency === "now" ? "#F5EDD0" : "#1A1208" }}>
-                    {a.plant}
-                  </div>
-                  <div style={{ fontSize: "13px", color: a.urgency === "now" ? "rgba(245,237,208,0.85)" : "#6B5020" }}>
-                    {a.action}
-                  </div>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
-
-      {/* ── Rows + per-plant cards ── */}
-      <div style={{ padding: "16px 20px" }}>
+      {/* Left column: Planting Plan by Row */}
+      <div style={{ marginBottom: "20px" }}>
         {zone.rows.map((row, rowIdx) => {
-          // Parse placement text into per-plant entries
-          const regex = /([A-Z][a-zA-Z\s&'+-]+(?:,\s*[A-Z][a-zA-Z\s&'+-]+)*)\s*(?:\(all\s+)?(\d+(?:[–-]\d+)?\s*cm)\)?:\s*([^:]+?(?=,\s*[A-Z]|\n|$))/gs;
-          const entries = [];
-          let m;
-          while ((m = regex.exec(row.placement)) !== null) {
-            const names = m[1].trim().split(",").map(n => n.trim()).filter(Boolean);
-            names.forEach(name => entries.push({ name, height: m[2], detail: (m[3] || "").trim() }));
-          }
-
-          if (entries.length === 0) return null;
+          const seeds = row.seeds || [];
+          if (seeds.length === 0) return null;
 
           return (
-            <div key={rowIdx} style={{ marginBottom: rowIdx < zone.rows.length - 1 ? "20px" : 0 }}>
-              {/* Row label */}
+            <div key={rowIdx} style={{ marginBottom: "20px" }}>
               <div style={{
                 fontFamily: "'Outfit', sans-serif",
                 fontSize: "11px",
-                letterSpacing: "2px",
+                letterSpacing: "1.5px",
                 textTransform: "uppercase",
                 color: "#8B6A18",
-                borderBottom: "1px solid rgba(196,168,130,0.3)",
-                paddingBottom: "5px",
                 marginBottom: "10px",
+                borderBottom: "1px solid rgba(196,168,130,0.25)",
+                paddingBottom: "4px",
               }}>
                 {row.label}
               </div>
 
-              {/* Plant cards */}
-              <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
-                {entries.map((entry, ei) => {
-                  const timing  = getSeedTimingWithDefaults(entry.name);
-                  const spacing = SEED_SPACING[entry.name]?.spacing;
-                  const method  = getMethod(entry.detail);
-                  const sowMon  = getSowMonth(entry.detail);
-                  const harvest = getHarvestNote(entry.detail);
-                  const isSelected = selectedSeed === entry.name;
+              <div style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
+                {seeds.map((seedName, ei) => {
+                  const { height, detail } = extractFromPlacement(seedName, row.placement);
+                  const timing = SEED_TIMING[seedName];
+                  const spacing = SEED_SPACING[seedName]?.spacing || extractSpacing(detail);
+                  const sowingSteps = buildSowingSteps(timing);
+                  const hasTiming = sowingSteps.length > 0;
+                  const isSelected = selectedSeed === seedName;
 
                   // Build the summary pill row
                   const pills = [
@@ -311,84 +176,121 @@ export default function PlantingDetailPanel({ zone, placementData, onSeedClick, 
                   return (
                     <button
                       key={ei}
-                      onClick={() => onSeedClick(isSelected ? null : entry.name)}
+                      onClick={() => onSeedClick(seedName)}
                       style={{
                         textAlign: "left",
-                        padding: "0",
-                        background: "transparent",
-                        border: "none",
+                        padding: "14px",
+                        background: isSelected
+                          ? "linear-gradient(145deg, #1E3A6E, #152D57)"
+                          : "rgba(248,243,235,0.8)",
+                        border: isSelected ? "1px solid #1E3A6E" : "1px solid rgba(196,168,130,0.35)",
+                        borderRadius: "3px",
                         cursor: "pointer",
                         width: "100%",
                         borderRadius: "2px",
                         transition: "transform 0.15s ease",
                       }}
-                      onMouseEnter={e => { e.currentTarget.style.transform = "translateX(2px)"; }}
-                      onMouseLeave={e => { e.currentTarget.style.transform = "translateX(0)"; }}
+                      onMouseEnter={e => {
+                        if (!isSelected) e.currentTarget.style.background = "rgba(196,168,130,0.2)";
+                      }}
+                      onMouseLeave={e => {
+                        if (!isSelected) e.currentTarget.style.background = "rgba(248,243,235,0.8)";
+                      }}
                     >
+                      {/* Plant name + height */}
                       <div style={{
-                        padding: "12px",
-                        background: isSelected
-                          ? "linear-gradient(145deg, #1E3A6E, #152D57)"
-                          : "rgba(255,255,255,0.6)",
-                        border: isSelected
-                          ? "1px solid #1E3A6E"
-                          : "1px solid rgba(196,168,130,0.3)",
-                        borderRadius: "2px",
+                        fontFamily: "'Cormorant SC', serif",
+                        fontSize: "16px",
+                        fontWeight: 600,
+                        color: isSelected ? "#F5EDD0" : "#1A1208",
+                        marginBottom: hasTiming || spacing ? "10px" : 0,
+                        display: "flex",
+                        alignItems: "baseline",
+                        gap: "8px",
                       }}>
-
-                        {/* Plant name + height */}
-                        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", marginBottom: "6px" }}>
-                          <div style={{
-                            fontFamily: "'Cormorant Garamond', serif",
-                            fontSize: "16px",
-                            fontWeight: 600,
-                            color: isSelected ? "#F5EDD0" : "#1A1208",
-                          }}>
-                            {entry.name}
-                          </div>
-                          <div style={{
+                        {seedName}
+                        {height && (
+                          <span style={{
                             fontFamily: "'Outfit', sans-serif",
                             fontSize: "11px",
-                            color: isSelected ? "rgba(245,237,208,0.65)" : "#A89474",
                             letterSpacing: "0.5px",
-                            flexShrink: 0,
-                            marginLeft: "8px",
+                            color: isSelected ? "rgba(245,237,208,0.55)" : "#8B6A18",
+                            fontWeight: 400,
                           }}>
-                            {entry.height}
-                          </div>
-                        </div>
+                            {height}
+                          </span>
+                        )}
+                      </div>
 
-                        {/* Pill summary row */}
-                        <div style={{ display: "flex", flexWrap: "wrap", gap: "4px", marginBottom: "8px" }}>
-                          {pills.map((p, pi) => (
-                            <span key={pi} style={{
-                              fontFamily: "'Outfit', sans-serif",
-                              fontSize: "10px",
-                              letterSpacing: "0.5px",
-                              padding: "2px 6px",
-                              background: isSelected
-                                ? "rgba(255,255,255,0.15)"
-                                : pi === 0 ? "rgba(30,58,110,0.08)" : "rgba(201,150,10,0.1)",
-                              border: isSelected
-                                ? "1px solid rgba(255,255,255,0.2)"
-                                : pi === 0 ? "1px solid rgba(30,58,110,0.2)" : "1px solid rgba(201,150,10,0.2)",
-                              borderRadius: "20px",
-                              color: isSelected ? "rgba(245,237,208,0.9)" : pi === 0 ? "#1E3A6E" : "#8B6A18",
-                            }}>
-                              {p}
-                            </span>
-                          ))}
+                      {/* Structured sowing + harvest steps */}
+                      {hasTiming && (
+                        <div style={{ marginBottom: spacing ? "8px" : 0 }}>
+                          {sowingSteps.map((step, si) => {
+                            const colors = STEP_COLORS[step.type] || STEP_COLORS.indoor;
+                            return (
+                              <div key={si} style={{
+                                fontFamily: "'Outfit', sans-serif",
+                                fontSize: "12px",
+                                letterSpacing: "0.3px",
+                                color: isSelected ? "rgba(245,237,208,0.9)" : colors.text,
+                                display: "flex",
+                                alignItems: "center",
+                                gap: "7px",
+                                marginBottom: si < sowingSteps.length - 1 ? "3px" : 0,
+                                lineHeight: 1.4,
+                              }}>
+                                <span style={{
+                                  width: "6px",
+                                  height: "6px",
+                                  borderRadius: "50%",
+                                  background: isSelected ? "rgba(245,237,208,0.6)" : colors.dot,
+                                  flexShrink: 0,
+                                }} />
+                                {step.label}
+                              </div>
+                            );
+                          })}
                         </div>
+                      )}
 
-                        {/* Placement detail (truncated unless selected) */}
+                      {/* Spacing */}
+                      {spacing && (
+                        <div style={{
+                          fontFamily: "'Outfit', sans-serif",
+                          fontSize: "11px",
+                          letterSpacing: "0.5px",
+                          color: isSelected ? "rgba(245,237,208,0.6)" : "#8B6A18",
+                          marginBottom: detail || timing?.notes ? "8px" : 0,
+                        }}>
+                          Space {spacing}cm apart
+                        </div>
+                      )}
+
+                      {/* Placement detail text */}
+                      {detail && (
                         <div style={{
                           fontSize: "13px",
                           fontStyle: "italic",
                           color: isSelected ? "rgba(245,237,208,0.8)" : "#7A5C1E",
-                          lineHeight: 1.6,
-                          marginBottom: harvest ? "8px" : 0,
+                          lineHeight: 1.55,
+                          borderTop: "1px solid",
+                          borderColor: isSelected ? "rgba(245,237,208,0.12)" : "rgba(196,168,130,0.25)",
+                          paddingTop: "8px",
                         }}>
-                          {isSelected ? entry.detail : (entry.detail.length > 130 ? entry.detail.slice(0, 130) + "…" : entry.detail)}
+                          {detail}
+                        </div>
+                      )}
+
+                      {/* Cultivation notes from SEED_TIMING */}
+                      {timing?.notes && (
+                        <div style={{
+                          fontFamily: "'Outfit', sans-serif",
+                          fontSize: "11px",
+                          color: isSelected ? "rgba(245,237,208,0.65)" : "#8B6A18",
+                          marginTop: "6px",
+                          fontStyle: "italic",
+                        }}>
+                          ✦ {timing.notes}
                         </div>
 
                         {/* Harvest callout — highlighted separately */}
@@ -425,16 +327,83 @@ export default function PlantingDetailPanel({ zone, placementData, onSeedClick, 
         })}
       </div>
 
-      {/* ── Zone-level season overview ── */}
-      {(() => {
-        // Find the earliest sow and latest harvest across all seeds in the zone
-        const timings = allSeeds.map(n => getSeedTimingWithDefaults(n)).filter(Boolean);
-        if (timings.length === 0) return null;
-        const earliestSow = Math.min(...timings.map(t => t.indoorStartWeek || t.directSowWeek || 99).filter(w => w < 99));
-        const latestHarvest = Math.max(...timings.map(t => t.harvestEndWeek || 0));
-        if (!isFinite(earliestSow) || !latestHarvest) return null;
+      {/* Right column: Sowing Timeline */}
+      <div style={{
+        borderLeft: "1px solid rgba(196,168,130,0.4)",
+        paddingLeft: "24px",
+        alignSelf: "start",
+      }}>
+        <div style={{
+          fontFamily: "'Outfit', sans-serif",
+          fontSize: "11px",
+          letterSpacing: "1px",
+          textTransform: "uppercase",
+          color: "#8B6A18",
+          marginBottom: "10px",
+        }}>
+          Sowing Timeline
+        </div>
+        <div style={{
+          display: "flex",
+          alignItems: "flex-end",
+          gap: "4px",
+          paddingBottom: "8px",
+        }}>
+          {months.map((month, idx) => {
+            const isCurrent = idx === currentIndex;
+            const isSowingMonth = ["Feb", "Mar", "Apr", "May"].includes(month);
 
-        return (
+            return (
+              <div
+                key={month}
+                style={{
+                  flex: 1,
+                  display: "flex",
+                  flexDirection: "column",
+                  alignItems: "center",
+                  gap: "4px",
+                }}
+              >
+                <div style={{
+                  width: "100%",
+                  height: isSowingMonth ? "24px" : "8px",
+                  background: isSowingMonth
+                    ? isCurrent
+                      ? "linear-gradient(145deg, #1E3A6E, #152D57)"
+                      : "linear-gradient(145deg, #C9960A, #8B6A18)"
+                    : "rgba(196,168,130,0.2)",
+                  borderRadius: "2px",
+                  transition: "all 0.3s ease",
+                  position: "relative",
+                }}>
+                  {isCurrent && (
+                    <div style={{
+                      position: "absolute",
+                      top: "-4px",
+                      left: "50%",
+                      transform: "translateX(-50%)",
+                      width: "0",
+                      height: "0",
+                      borderLeft: "5px solid transparent",
+                      borderRight: "5px solid transparent",
+                      borderBottom: "6px solid #1E3A6E",
+                    }} />
+                  )}
+                </div>
+                <span style={{
+                  fontFamily: "'Outfit', sans-serif",
+                  fontSize: "10px",
+                  letterSpacing: "0.5px",
+                  color: isCurrent ? "#1E3A6E" : "#8B6A18",
+                  fontWeight: isCurrent ? 600 : 400,
+                }}>
+                  {month}
+                </span>
+              </div>
+            );
+          })}
+        </div>
+        {currentIndex >= 0 && (
           <div style={{
             padding: "14px 20px 18px",
             borderTop: "1px solid rgba(196,168,130,0.35)",

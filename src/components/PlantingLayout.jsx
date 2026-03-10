@@ -1,12 +1,14 @@
-import React, { useEffect } from "react";
+import React, { useEffect, useRef } from "react";
 
 /**
- * PlantingLayout — Wide two-column layout for the Placement tab.
+ * PlantingLayout — Full-width map with inline zone detail accordion
  *
- * Breaks out of the app's max-width container to occupy 90vw, giving the
- * planting plan document the full spread it deserves. Map (left, 56%) and
- * the zone detail panel (right, 44%) share a unified document border so
- * they read as one coherent plan rather than two separate widgets.
+ * Features:
+ * - Map takes full width at all times
+ * - Clicking a zone expands an inline detail panel below the map
+ * - Detail panel slides in with a smooth animation, spanning full width
+ * - Click × button or Escape to close
+ * - Regency aesthetic: parchment gradient, Cormorant Garamond fonts, gold accents
  */
 function PlantingLayout({
   selectedZone,
@@ -15,7 +17,10 @@ function PlantingLayout({
   detailPanel,
   className = "",
 }) {
-  // Escape key closes the panel
+  const hasDetailPanel = selectedZone && detailPanel;
+  const detailRef = useRef(null);
+
+  // Handle escape key to close
   useEffect(() => {
     const handleKeyDown = (e) => {
       if (e.key === "Escape" && selectedZone) onZoneSelect(null);
@@ -24,189 +29,100 @@ function PlantingLayout({
     return () => document.removeEventListener("keydown", handleKeyDown);
   }, [selectedZone, onZoneSelect]);
 
+  // Scroll detail panel into view when it opens
+  useEffect(() => {
+    if (hasDetailPanel && detailRef.current) {
+      detailRef.current.scrollIntoView({ behavior: "smooth", block: "nearest" });
+    }
+  }, [hasDetailPanel, selectedZone]);
+
   return (
-    <div
-      className={className}
-      style={{
-        // Break out of the app's max-width: 1200px container to 90vw
-        width: "90vw",
-        marginLeft: "calc(50% - 45vw)",
-        display: "flex",
-        gap: "0",
-        alignItems: "flex-start",
-        animation: "fadeUp 0.5s ease both",
-        border: "1px solid rgba(180,140,60,0.28)",
-        borderRadius: "3px",
-        overflow: "hidden",
-        boxShadow: "0 4px 24px rgba(59,47,32,0.08)",
-      }}
-    >
-      {/* ── Left column: map ── */}
+    <div className={className} style={{ animation: "fadeUp 0.5s ease both" }}>
+      {/* Lane label above map */}
       <div
         style={{
-          flex: "0 0 56%",
-          minWidth: 0,
-          borderRight: "1px solid rgba(180,140,60,0.25)",
-          background: "rgba(255,252,243,0.5)",
+          textAlign: "center",
+          fontFamily: "'Cormorant SC', serif",
+          fontSize: "14px",
+          letterSpacing: "3px",
+          color: "#8B6A18",
+          marginBottom: "6px",
         }}
       >
-        {/* Map header */}
-        <div
-          style={{
-            padding: "10px 16px",
-            borderBottom: "1px solid rgba(180,140,60,0.18)",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "space-between",
-          }}
-        >
-          <div
-            style={{
-              fontFamily: "'Cormorant SC', serif",
-              fontSize: "13px",
-              letterSpacing: "3px",
-              color: "#8B6A18",
-            }}
-          >
-            ← Lane
-          </div>
-          <div
-            style={{
-              fontFamily: "'Outfit', sans-serif",
-              fontSize: "11px",
-              letterSpacing: "2px",
-              color: "#B5A68E",
-              textTransform: "uppercase",
-            }}
-          >
-            Garden Plan · 30′ × 100′
-          </div>
-          <div
-            style={{
-              fontFamily: "'Cormorant SC', serif",
-              fontSize: "13px",
-              letterSpacing: "3px",
-              color: "#8B6A18",
-            }}
-          >
-            Farm fields →
-          </div>
-        </div>
-
-        {/* Map content */}
-        <div style={{ padding: "12px" }}>
-          {children}
-        </div>
+        Lane
       </div>
 
-      {/* ── Right column: sticky detail panel ── */}
+      {/* Full-width SVG map */}
+      {children}
+
+      {/* Orientation label below map */}
       <div
         style={{
-          flex: "1 1 0",
-          minWidth: "320px",
-          position: "sticky",
-          top: "0",
-          maxHeight: "100vh",
-          overflowY: "auto",
-          scrollbarWidth: "thin",
-          scrollbarColor: "rgba(180,140,60,0.3) transparent",
-          background: "rgba(255,250,238,0.6)",
+          textAlign: "center",
+          fontFamily: "'Cormorant SC', serif",
+          fontSize: "14px",
+          letterSpacing: "3px",
+          color: "#8B6A18",
+          marginTop: "6px",
         }}
       >
-        {selectedZone && detailPanel ? (
-          <div style={{ position: "relative" }}>
-            {/* Close button */}
-            <button
-              onClick={() => onZoneSelect(null)}
-              aria-label="Close zone detail"
-              style={{
-                position: "absolute",
-                top: "12px",
-                right: "12px",
-                width: "28px",
-                height: "28px",
-                borderRadius: "50%",
-                border: "1px solid rgba(180,140,60,0.5)",
-                background: "rgba(255,250,235,0.95)",
-                color: "#8B6A18",
-                fontSize: "18px",
-                lineHeight: "1",
-                cursor: "pointer",
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                zIndex: 1,
-                transition: "all 0.2s ease",
-                boxShadow: "0 2px 8px rgba(0,0,0,0.12)",
-              }}
-              onMouseEnter={(e) => {
-                e.currentTarget.style.background = "#FFF5D6";
-                e.currentTarget.style.transform = "scale(1.08)";
-              }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.background = "rgba(255,250,235,0.95)";
-                e.currentTarget.style.transform = "scale(1)";
-              }}
-            >
-              ×
-            </button>
+        Farm fields to the South & East →
+      </div>
 
-            {detailPanel}
-          </div>
-        ) : (
-          /* Empty state */
-          <div
+      {/* Inline zone detail — expands below map when a zone is selected */}
+      {hasDetailPanel && (
+        <div
+          ref={detailRef}
+          style={{
+            marginTop: "16px",
+            background: "linear-gradient(160deg, #F9EDD0 0%, #EDD9AF 100%)",
+            border: "2px solid #C9960A",
+            borderRadius: "4px",
+            boxShadow: "0 4px 24px rgba(0,0,0,0.18), 0 0 0 1px rgba(201,150,10,0.15)",
+            animation: "fadeUp 0.25s ease both",
+            position: "relative",
+          }}
+          onClick={(e) => e.stopPropagation()}
+        >
+          {/* Close button */}
+          <button
+            onClick={() => onZoneSelect(null)}
             style={{
-              padding: "60px 28px",
-              textAlign: "center",
-              color: "#B5A68E",
+              position: "absolute",
+              top: "12px",
+              right: "12px",
+              width: "28px",
+              height: "28px",
+              borderRadius: "50%",
+              border: "1px solid rgba(180,140,60,0.5)",
+              background: "rgba(255,250,235,0.95)",
+              color: "#8B6A18",
+              fontSize: "18px",
+              lineHeight: "1",
+              cursor: "pointer",
               display: "flex",
               flexDirection: "column",
               alignItems: "center",
               justifyContent: "center",
-              minHeight: "300px",
+              zIndex: 10,
+              transition: "all 0.2s ease",
+              boxShadow: "0 2px 8px rgba(0,0,0,0.12)",
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.background = "rgba(255,250,235,1)";
+              e.currentTarget.style.transform = "scale(1.05)";
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.background = "rgba(255,250,235,0.95)";
+              e.currentTarget.style.transform = "scale(1)";
             }}
           >
-            <div style={{ fontSize: "36px", marginBottom: "16px", opacity: 0.4 }}>❦</div>
-            <div
-              style={{
-                fontSize: "17px",
-                fontFamily: "'Cormorant Garamond', Georgia, serif",
-                fontStyle: "italic",
-                lineHeight: 1.8,
-                maxWidth: "260px",
-              }}
-            >
-              Select a zone on the plan to reveal its full planting schedule.
-            </div>
-            <div
-              style={{
-                marginTop: "20px",
-                fontSize: "12px",
-                fontFamily: "'Outfit', sans-serif",
-                letterSpacing: "1.5px",
-                color: "#C4A882",
-                textTransform: "uppercase",
-              }}
-            >
-              Press{" "}
-              <kbd
-                style={{
-                  fontFamily: "monospace",
-                  background: "rgba(196,168,130,0.15)",
-                  padding: "1px 6px",
-                  borderRadius: "2px",
-                  border: "1px solid rgba(196,168,130,0.3)",
-                  textTransform: "none",
-                }}
-              >
-                Esc
-              </kbd>{" "}
-              to deselect
-            </div>
-          </div>
-        )}
-      </div>
+            ×
+          </button>
+
+          <div style={{ padding: "24px" }}>{detailPanel}</div>
+        </div>
+      )}
     </div>
   );
 }
