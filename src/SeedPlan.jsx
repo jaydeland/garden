@@ -1,7 +1,11 @@
 import { useState } from "react";
 import furrowImg from "./assets/furrow-plow.jpg";
 import { SEED_SPACING, SEED_TIMING, getSeedTimingWithDefaults } from "./seedData.js";
-import DetailsTab from "./components/DetailsTab.jsx";
+import { weekToDate, getSowingWindow, getHarvestWindow } from "./seedTiming.js";
+import PlantingLayout from "./components/PlantingLayout.jsx";
+import PlantingDetailPanel from "./components/PlantingDetailPanel.jsx";
+import { SeedGroupLegend } from "./components/index.js";
+import WeekTimeline from "./components/WeekTimeline.jsx";
 
 const SEEDS = [
   // === ORDER 1: Original (WEB-024012) ===
@@ -536,7 +540,8 @@ export default function SeedPlan() {
   const [catFilter, setCatFilter] = useState("All");
   const [selectedZone, setSelectedZone] = useState(null);
   const [selectedPlacement, setSelectedPlacement] = useState(null);
-const [timingFilter, setTimingFilter] = useState(null); // { type: 'method'|'week', value: string }
+  const [zonePosition, setZonePosition] = useState(null); // { x, y } screen position of zone top for popup
+  const [timingFilter, setTimingFilter] = useState(null); // { type: 'method'|'week', value: string }
   const [highlightMode, setHighlightMode] = useState('none'); // 'none' | 'timing' | 'seed'
   const [selectedWeek, setSelectedWeek] = useState(null);
 
@@ -666,7 +671,7 @@ const [timingFilter, setTimingFilter] = useState(null); // { type: 'method'|'wee
           { id: "social", label: "Issues" },
           { id: "palettes", label: "The Palettes" },
           { id: "layout", label: "The Grounds" },
-          { id: "details", label: "The Details" },
+          { id: "placement", label: "The Placement" },
           { id: "field", label: "The Field" },
         ].map(tab => (
           <button key={tab.id} onClick={() => setActiveTab(tab.id)} style={{
@@ -681,7 +686,7 @@ const [timingFilter, setTimingFilter] = useState(null); // { type: 'method'|'wee
         ))}
       </div>
 
-      <div style={{ padding: "24px", maxWidth: activeTab === "details" ? "none" : "1200px", margin: "0 auto" }}>
+      <div style={{ padding: "24px", maxWidth: activeTab === "placement" ? "none" : "1200px", margin: "0 auto" }}>
 
         {/* === TIMELINE === */}
         {activeTab === "timeline" && (
@@ -877,7 +882,7 @@ const [timingFilter, setTimingFilter] = useState(null); // { type: 'method'|'wee
                   {[0,10,20,30,40,50,60,70,80,90,100].map(ft => (
                     <g key={ft}>
                       <line x1="16" y1={ft * 10} x2="22" y2={ft * 10} stroke="#C4A882" strokeWidth="0.8" />
-                      <text x="13" y={ft * 10 + 3.5} textAnchor="end" fontSize="7" fontFamily="'Outfit', sans-serif" fill="#A89474">{ft}′</text>
+                      <text x="13" y={ft * 10 + 3.5} textAnchor="end" fontSize="12" fontFamily="'Outfit', sans-serif" fill="#A89474">{ft}′</text>
                     </g>
                   ))}
 
@@ -888,7 +893,7 @@ const [timingFilter, setTimingFilter] = useState(null); // { type: 'method'|'wee
                     return (
                       <g key={ft}>
                         <line x1={x} y1="3" x2={x} y2="10" stroke="#C4A882" strokeWidth="0.8" />
-                        <text x={x} y="16" textAnchor="middle" fontSize="7" fontFamily="'Outfit', sans-serif" fill="#A89474">{ft}′</text>
+                        <text x={x} y="16" textAnchor="middle" fontSize="12" fontFamily="'Outfit', sans-serif" fill="#A89474">{ft}′</text>
                       </g>
                     );
                   })}
@@ -902,8 +907,29 @@ const [timingFilter, setTimingFilter] = useState(null); // { type: 'method'|'wee
                     const seeds = getAllSeeds(zone);
 
                     return (
-                      <g key={zone.id} onClick={() => {
+                      <g key={zone.id} onClick={(e) => {
                         if (isPath) return;
+                        // Calculate zone and row position on screen for layout tab SVG
+                        const svg = e.target.closest('svg');
+                        if (svg) {
+                          const svgRect = svg.getBoundingClientRect();
+                          const viewBoxWidth = 400;
+                          const scale = svgRect.width / viewBoxWidth;
+                          const zoneTopY = svgRect.top + zoneY * scale;
+                          const zoneCenterX = svgRect.left + (30 + 352 / 2) * scale;
+
+                          // Calculate which row was clicked
+                          const clickY = e.clientY;
+                          const relativeY = clickY - zoneTopY;
+                          const totalRows = zone.rows.length || 1;
+                          const rowH = zoneH * scale / totalRows;
+                          const rowIndex = Math.max(0, Math.min(totalRows - 1, Math.floor(relativeY / rowH)));
+
+                          // Calculate row's center Y position
+                          const rowCenterY = zoneTopY + rowIndex * rowH + rowH / 2;
+
+                          setZonePosition({ x: zoneCenterX, y: rowCenterY });
+                        }
                         setSelectedZone(isSelected ? null : zone.id);
                       }} style={{ cursor: isPath ? "default" : "pointer" }}>
                         {/* Zone fill */}
@@ -928,7 +954,7 @@ const [timingFilter, setTimingFilter] = useState(null); // { type: 'method'|'wee
                                   <line x1="30" y1={rowY} x2="382" y2={rowY} stroke={zone.stroke} strokeWidth="0.6" strokeDasharray="3,3" opacity="0.6" />
                                 )}
                                 {/* Row label */}
-                                <text x="35" y={rowY + rowH * 0.38} fontSize="7.5" fontFamily="'Outfit', sans-serif" fill="#3B2F20" opacity="0.65" fontStyle="italic">{row.label}</text>
+                                <text x="35" y={rowY + rowH * 0.38} fontSize="12" fontFamily="'Outfit', sans-serif" fill="#3B2F20" opacity="0.65" fontStyle="italic">{row.label}</text>
                                 {/* Seed color swatches on right edge */}
                                 {row.seeds.slice(0, 6).map((sName, si) => {
                                   const sd = SEEDS.find(s => s.name === sName);
@@ -944,11 +970,11 @@ const [timingFilter, setTimingFilter] = useState(null); // { type: 'method'|'wee
                         {/* Zone name label */}
                         {!isPath ? (
                           <g>
-                            <text x="191" y={zoneY + zoneH * 0.5 - 4} textAnchor="middle" fontSize="9" fontFamily="'Cormorant Garamond', Georgia, serif" fontStyle="italic" fill="#3B2F20" opacity="0.65">{zone.label}</text>
-                            <text x="191" y={zoneY + zoneH * 0.5 + 9} textAnchor="middle" fontSize="8" fontFamily="'Outfit', sans-serif" fill="#3B2F20" opacity="0.5">{zone.depth}′ · {getAllSeeds(zone).length} vars</text>
+                            <text x="191" y={zoneY + zoneH * 0.5 - 4} textAnchor="middle" fontSize="12" fontFamily="'Cormorant Garamond', Georgia, serif" fontStyle="italic" fill="#3B2F20" opacity="0.65">{zone.label}</text>
+                            <text x="191" y={zoneY + zoneH * 0.5 + 9} textAnchor="middle" fontSize="12" fontFamily="'Outfit', sans-serif" fill="#3B2F20" opacity="0.5">{zone.depth}′ · {getAllSeeds(zone).length} vars</text>
                           </g>
                         ) : (
-                          <text x="206" y={zoneY + zoneH * 0.5 + 3.5} textAnchor="middle" fontSize="7" fontFamily="'Outfit', sans-serif" fill="#8B7D6B" opacity="0.6" letterSpacing="2">— PATH —</text>
+                          <text x="206" y={zoneY + zoneH * 0.5 + 3.5} textAnchor="middle" fontSize="12" fontFamily="'Outfit', sans-serif" fill="#8B7D6B" opacity="0.6" letterSpacing="2">— PATH —</text>
                         )}
                       </g>
                     );
@@ -957,12 +983,12 @@ const [timingFilter, setTimingFilter] = useState(null); // { type: 'method'|'wee
                   {/* Compass rose — top right corner */}
                   <g transform="translate(378, 32)">
                     <circle cx="0" cy="0" r="16" fill="rgba(250,246,240,0.92)" stroke="#C4A882" strokeWidth="0.8" />
-                    <text x="0" y="-5" textAnchor="middle" fontSize="8" fontFamily="'Cormorant SC', serif" fill="#3B2F20">N</text>
+                    <text x="0" y="-5" textAnchor="middle" fontSize="12" fontFamily="'Cormorant SC', serif" fill="#3B2F20">N</text>
                     <line x1="0" y1="-13" x2="0" y2="-1" stroke="#3B2F20" strokeWidth="1.2" />
                     <polygon points="0,-13 -2.5,-5 2.5,-5" fill="#3B2F20" />
-                    <text x="0" y="14" textAnchor="middle" fontSize="7" fontFamily="'Cormorant SC', serif" fill="#A89474">S</text>
-                    <text x="-13" y="4" textAnchor="middle" fontSize="6.5" fontFamily="'Cormorant SC', serif" fill="#A89474">W</text>
-                    <text x="13" y="4" textAnchor="middle" fontSize="6.5" fontFamily="'Cormorant SC', serif" fill="#A89474">E</text>
+                    <text x="0" y="14" textAnchor="middle" fontSize="12" fontFamily="'Cormorant SC', serif" fill="#A89474">S</text>
+                    <text x="-13" y="4" textAnchor="middle" fontSize="12" fontFamily="'Cormorant SC', serif" fill="#A89474">W</text>
+                    <text x="13" y="4" textAnchor="middle" fontSize="12" fontFamily="'Cormorant SC', serif" fill="#A89474">E</text>
                   </g>
 
                   {/* Scale bar */}
@@ -970,8 +996,8 @@ const [timingFilter, setTimingFilter] = useState(null); // { type: 'method'|'wee
                     <rect x="0" y="0" width="100" height="3" fill="none" stroke="#8B7D6B" strokeWidth="1" />
                     <line x1="0" y1="0" x2="0" y2="6" stroke="#8B7D6B" strokeWidth="1" />
                     <line x1="100" y1="0" x2="100" y2="6" stroke="#8B7D6B" strokeWidth="1" />
-                    <text x="50" y="14" textAnchor="middle" fontSize="7" fontFamily="'Outfit', sans-serif" fill="#8B7D6B">10 feet</text>
-                    <text x="0" y="14" textAnchor="middle" fontSize="6.5" fontFamily="'Outfit', sans-serif" fill="#A89474">0</text>
+                    <text x="50" y="14" textAnchor="middle" fontSize="12" fontFamily="'Outfit', sans-serif" fill="#8B7D6B">10 feet</text>
+                    <text x="0" y="14" textAnchor="middle" fontSize="12" fontFamily="'Outfit', sans-serif" fill="#A89474">0</text>
                   </g>
                 </svg>
 
@@ -1060,7 +1086,9 @@ const [timingFilter, setTimingFilter] = useState(null); // { type: 'method'|'wee
                 {ZONES.filter(z => z.rows.length > 0).map(zone => (
                   <button
                     key={zone.id}
-                    onClick={() => {
+                    onClick={(e) => {
+                      const rect = e.currentTarget.getBoundingClientRect();
+                      setZonePosition({ x: rect.left + rect.width / 2, y: rect.top });
                       setSelectedZone(selectedZone === zone.id ? null : zone.id);
                     }}
                     style={{
@@ -1084,10 +1112,399 @@ const [timingFilter, setTimingFilter] = useState(null); // { type: 'method'|'wee
           </div>
         )}
 
-        {/* === THE DETAILS === */}
-        {activeTab === "details" && (
+        {/* === THE PLACEMENT === */}
+        {activeTab === "placement" && (
           <div style={{ animation: "fadeUp 0.5s ease both" }}>
-            <DetailsTab zones={ZONES} seeds={SEEDS} />
+            <div style={{ textAlign: "center", fontStyle: "italic", color: "#7A5C1E", fontSize: "18px", lineHeight: 1.8, maxWidth: "620px", margin: "0 auto 28px" }}>
+              "Dear Reader — knowing where to plant is one matter; knowing how many seeds to require is quite another.
+              What follows is the precise accounting of spacing and quantity for each variety."
+            </div>
+
+            {/* Filter and timeline controls */}
+            <SeedGroupLegend
+              activeFilter={timingFilter}
+              onFilterClick={(filter) => {
+                setTimingFilter(filter);
+                setHighlightMode(filter ? 'timing' : 'none');
+              }}
+              placementData={placementData}
+            />
+
+            <WeekTimeline
+              selectedWeek={selectedWeek}
+              onWeekSelect={setSelectedWeek}
+              currentWeek={currentWeek}
+            />
+
+            <PlantingLayout
+              selectedZone={selectedZone}
+              onZoneSelect={(zoneId) => {
+                setSelectedZone(zoneId);
+                if (!zoneId) setZonePosition(null);
+              }}
+              zonePosition={zonePosition}
+              detailPanel={
+                selectedZone && (
+                  <PlantingDetailPanel
+                    zone={ZONES.find(z => z.id === selectedZone)}
+                    placementData={placementData.filter(p => p.zone === selectedZone)}
+                    onSeedClick={setSelectedPlacement}
+                    selectedSeed={selectedPlacement}
+                    seedMeta={SEEDS}
+                  />
+                )
+              }
+            >
+              {/* SVG Map with seed block layout */}
+              <svg
+                viewBox="-60 -20 720 2040"
+                style={{ width: "100%", display: "block", border: "1px solid rgba(196,168,130,0.3)", borderRadius: "2px" }}
+                aria-label="Garden map with seed placement visualization"
+              >
+                <rect x="-60" y="-20" width="720" height="2040" fill="#F8F3EB" />
+
+                {/* Left foot ruler */}
+                <line x1="0" y1="0" x2="0" y2="2000" stroke="#C4A882" strokeWidth="0.5" opacity="0.5" />
+                {[0,10,20,30,40,50,60,70,80,90,100].map(ft => (
+                  <g key={ft}>
+                    <line x1="-12" y1={ft * 20} x2="0" y2={ft * 20} stroke="#C4A882" strokeWidth="0.8" />
+                    <text x="-18" y={ft * 20 + 7} textAnchor="end" fontSize="12" fontFamily="'Outfit', sans-serif" fill="#A89474">{ft}′</text>
+                  </g>
+                ))}
+
+                {/* Top width ruler */}
+                <line x1="0" y1="-12" x2="600" y2="-12" stroke="#C4A882" strokeWidth="0.5" opacity="0.5" />
+                {[0, 10, 20, 30].map((ft, i) => {
+                  const x = i * 200;
+                  return (
+                    <g key={ft}>
+                      <line x1={x} y1="-18" x2={x} y2="-6" stroke="#C4A882" strokeWidth="0.8" />
+                      <text x={x} y="-22" textAnchor="middle" fontSize="12" fontFamily="'Outfit', sans-serif" fill="#A89474">{ft}′</text>
+                    </g>
+                  );
+                })}
+
+                {/* Zone blocks with seed box layout */}
+                {ZONES.map(zone => {
+                  const isPath = zone.rows.length === 0;
+                  const zoneH = zone.depth * 20;
+                  const zoneY = zone.yStart * 20;
+                  const zoneX = 20;
+                  const zoneW = 580;
+
+                  // Check if zone matches current filter/highlight
+                  const matchesFilter = !highlightMode || !selectedWeek || (() => {
+                    const zoneSeeds = zone.rows.flatMap(r => r.seeds || []);
+                    return zoneSeeds.some(seedName => {
+                      const timing = getSeedTimingWithDefaults(seedName);
+                      if (highlightMode === 'sowing') {
+                        const window = getSowingWindow(timing);
+                        return window.startWeek <= selectedWeek && window.endWeek >= selectedWeek;
+                      }
+                      return false;
+                    });
+                  })();
+
+                  const zoneOpacity = highlightMode && !matchesFilter ? 0.4 : 1;
+
+                  return (
+                    <g key={zone.id}>
+                      {/* Zone background */}
+                      <rect
+                        x={zoneX} y={zoneY} width={zoneW} height={zoneH}
+                        fill={zone.fill} stroke={zone.stroke}
+                        strokeWidth="1" opacity={zoneOpacity}
+                        style={{ transition: "opacity 0.3s" }}
+                        onClick={(e) => {
+                          // Calculate zone and row position on screen
+                          const svg = e.target.closest('svg');
+                          if (svg) {
+                            const svgRect = svg.getBoundingClientRect();
+                            const viewBoxWidth = 720; // viewBox width
+                            const viewBoxY = -20; // viewBox y offset
+                            const scale = svgRect.width / viewBoxWidth;
+                            const zoneTopY = svgRect.top + (zoneY - viewBoxY) * scale;
+                            const zoneCenterX = svgRect.left + (zoneX + zoneW / 2) * scale;
+
+                            // Calculate which row was clicked
+                            const clickY = e.clientY;
+                            const relativeY = clickY - zoneTopY;
+                            const totalRows = zone.rows.length || 1;
+                            const rowH = zoneH * scale / totalRows;
+                            const rowIndex = Math.max(0, Math.min(totalRows - 1, Math.floor(relativeY / rowH)));
+
+                            // Calculate row's center Y position
+                            const rowCenterY = zoneTopY + rowIndex * rowH + rowH / 2;
+
+                            setZonePosition({ x: zoneCenterX, y: rowCenterY });
+                          }
+                          setSelectedZone(selectedZone === zone.id ? null : zone.id);
+                        }}
+                      />
+
+                      {/* Zone label for paths */}
+                      {isPath && (
+                        <text x={zoneX + zoneW / 2} y={zoneY + zoneH * 0.5 + 5} textAnchor="middle" fontSize="14" fontFamily="'Outfit', sans-serif" fill="#3B2F20" opacity="0.4">
+                          {zone.label}
+                        </text>
+                      )}
+
+                      {/* Visual row backgrounds */}
+                      {!isPath && zone.rows.map((row, rowIdx) => {
+                        const totalRows = zone.rows.length;
+                        const rowH = zoneH / totalRows;
+                        const rowY = zoneY + rowIdx * rowH;
+
+                        return (
+                          <g key={`row-bg-${row.label}`}>
+                            {/* Row background strip */}
+                            <rect
+                              x={zoneX + 2}
+                              y={rowY + 2}
+                              width={zoneW - 4}
+                              height={rowH - 4}
+                              fill={rowIdx % 2 === 0 ? "rgba(255,255,255,0.25)" : "rgba(255,255,255,0.1)"}
+                              stroke="rgba(180,140,60,0.15)"
+                              strokeWidth="0.5"
+                            />
+                            {/* Row label */}
+                            <text
+                              x={zoneX + zoneW - 10}
+                              y={rowY + 18}
+                              textAnchor="end"
+                              fontSize="12"
+                              fontFamily="'Outfit', sans-serif"
+                              fill="#8B6A18"
+                              opacity="0.6"
+                            >
+                              {row.label}
+                            </text>
+                          </g>
+                        );
+                      })}
+
+                      {/* Seed layout - seeds arranged horizontally (west to east) along the row */}
+                      {!isPath && zone.rows.map((row, rowIdx) => {
+                        const totalRows = zone.rows.length;
+                        const rowH = zoneH / totalRows;
+                        const rowY = zoneY + rowIdx * rowH;
+                        const seeds = row.seeds || [];
+                        const seedCount = seeds.length;
+
+                        if (seedCount === 0) return null;
+
+                        // Row runs west to east (left to right), 30' wide
+                        // When multiple seeds share a row, divide the row width among them
+                        const blockWidth = zoneW / seedCount; // Each seed gets a block of the row
+
+                        return seeds.map((seedName, seedIdx) => {
+                          const seedData = SEEDS.find(s => s.name === seedName);
+                          const spacing = SEED_SPACING[seedName]?.spacing;
+                          const blockX = zoneX + seedIdx * blockWidth;
+
+                          // Determine if this is a broadcast seed (poppies, etc.)
+                          const isBroadcast = seedName.toLowerCase().includes('poppy') || !spacing;
+
+                          // Calculate plant positions within this seed's block
+                          let plants = [];
+                          if (!isBroadcast && spacing) {
+                            // Convert block width from SVG units to cm for calculation
+                            // blockWidth in SVG units (1' = 20 units)
+                            const blockWidthCm = (blockWidth / 20) * 30.48;
+                            const plantsInBlock = Math.max(1, Math.floor(blockWidthCm / spacing));
+                            const plantSpacingSvg = blockWidth / plantsInBlock;
+                            plants = Array.from({ length: plantsInBlock }, (_, i) => ({
+                              x: blockX + i * plantSpacingSvg + plantSpacingSvg * 0.1,
+                              width: plantSpacingSvg * 0.8,
+                              num: i + 1
+                            }));
+                          }
+
+                          return (
+                            <g key={`${row.label}-${seedName}`}>
+                              {/* Block background with seed color tint */}
+                              <rect
+                                x={blockX + 1}
+                                y={rowY + 24}
+                                width={blockWidth - 2}
+                                height={rowH - 28}
+                                fill={seedData ? `${seedData.color}12` : 'rgba(200,200,200,0.08)'}
+                                stroke="rgba(180,140,60,0.08)"
+                                strokeWidth="0.5"
+                                style={{ cursor: 'pointer' }}
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  setSelectedZone(zone.id);
+                                  setSelectedPlacement(seedName);
+                                }}
+                              />
+
+                              {/* Plant boxes arranged horizontally (west to east) within this block */}
+                              {isBroadcast ? (
+                                // Broadcast: show filled pattern across the block
+                                <rect
+                                  x={blockX + 6}
+                                  y={rowY + 45}
+                                  width={blockWidth - 12}
+                                  height={rowH - 70}
+                                  fill={seedData ? `${seedData.color}35` : 'rgba(150,150,150,0.25)'}
+                                  stroke={seedData ? seedData.color : '#999'}
+                                  strokeWidth="1"
+                                  strokeDasharray="4,2"
+                                  style={{ cursor: 'pointer' }}
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    setSelectedZone(zone.id);
+                                    setSelectedPlacement(seedName);
+                                  }}
+                                />
+                              ) : (
+                                // Individual plants along the block
+                                <g>
+                                  {plants.map((plant) => {
+                                    const plantH = Math.min(rowH - 85, 28);
+                                    const plantY = rowY + 50 + (rowH - 85 - plantH) / 2;
+
+                                    return (
+                                      <rect
+                                        key={plant.num}
+                                        x={plant.x}
+                                        y={plantY}
+                                        width={plant.width}
+                                        height={plantH}
+                                        fill={seedData ? seedData.color : '#999'}
+                                        stroke="rgba(255,255,255,0.5)"
+                                        strokeWidth="0.5"
+                                        opacity="0.9"
+                                        rx="2"
+                                        style={{ cursor: 'pointer' }}
+                                        onClick={(e) => {
+                                          e.stopPropagation();
+                                          setSelectedZone(zone.id);
+                                          setSelectedPlacement(seedName);
+                                        }}
+                                      >
+                                        <title>{seedName} - Plant {plant.num} of {plants.length}</title>
+                                      </rect>
+                                    );
+                                  })}
+                                </g>
+                              )}
+
+                              {/* Seed label - centered in block, with text wrapping for long names */}
+                              {(() => {
+                                const displayName = seedName.length > 22 ? seedName.substring(0, 19) + '...' : seedName;
+                                const nameParts = displayName.length > 14 ? [displayName.slice(0, Math.ceil(displayName.length / 2)), displayName.slice(Math.ceil(displayName.length / 2))] : [displayName];
+
+                                return (
+                                  <g>
+                                    {nameParts.length === 1 ? (
+                                      <text
+                                        x={blockX + blockWidth / 2}
+                                        y={rowY + 38}
+                                        textAnchor="middle"
+                                        fontSize="12"
+                                        fontFamily="'Outfit', sans-serif"
+                                        fontWeight="600"
+                                        fill={seedData ? seedData.color : '#1A1208'}
+                                        style={{ cursor: 'pointer' }}
+                                        onClick={(e) => {
+                                          e.stopPropagation();
+                                          setSelectedZone(zone.id);
+                                          setSelectedPlacement(seedName);
+                                        }}
+                                      >
+                                        {nameParts[0]}
+                                      </text>
+                                    ) : (
+                                      <>
+                                        <text
+                                          x={blockX + blockWidth / 2}
+                                          y={rowY + 33}
+                                          textAnchor="middle"
+                                          fontSize="12"
+                                          fontFamily="'Outfit', sans-serif"
+                                          fontWeight="600"
+                                          fill={seedData ? seedData.color : '#1A1208'}
+                                          style={{ cursor: 'pointer' }}
+                                          onClick={(e) => {
+                                            e.stopPropagation();
+                                            setSelectedZone(zone.id);
+                                            setSelectedPlacement(seedName);
+                                          }}
+                                        >
+                                          {nameParts[0]}
+                                        </text>
+                                        <text
+                                          x={blockX + blockWidth / 2}
+                                          y={rowY + 44}
+                                          textAnchor="middle"
+                                          fontSize="12"
+                                          fontFamily="'Outfit', sans-serif"
+                                          fontWeight="600"
+                                          fill={seedData ? seedData.color : '#1A1208'}
+                                          style={{ cursor: 'pointer' }}
+                                          onClick={(e) => {
+                                            e.stopPropagation();
+                                            setSelectedZone(zone.id);
+                                            setSelectedPlacement(seedName);
+                                          }}
+                                        >
+                                          {nameParts[1]}
+                                        </text>
+                                      </>
+                                    )}
+                                  </g>
+                                );
+                              })()}
+
+                              {/* Plant count label at bottom of block */}
+                              <text
+                                x={blockX + blockWidth / 2}
+                                y={rowY + rowH - 10}
+                                textAnchor="middle"
+                                fontSize="12"
+                                fontFamily="'Outfit', sans-serif"
+                                fill="#6B5020"
+                              >
+                                {isBroadcast ? 'Broadcast' : `${plants.length}`}
+                              </text>
+                            </g>
+                          );
+                        });
+                      })}
+
+                      {/* Direction indicator for rows */}
+                      {!isPath && zone.rows.length > 0 && (
+                        <g>
+                          <text
+                            x={zoneX + zoneW / 2}
+                            y={zoneY + zoneH - 8}
+                            textAnchor="middle"
+                            fontSize="12"
+                            fontFamily="'Outfit', sans-serif"
+                            fill="#8B6A18"
+                            opacity="0.5"
+                          >
+                            ← West · Row runs East →
+                          </text>
+                        </g>
+                      )}
+                    </g>
+                  );
+                })}
+
+                {/* Scale bar */}
+                <g transform="translate(20, 2014)">
+                  <rect x="0" y="0" width="200" height="4" fill="none" stroke="#8B7D6B" strokeWidth="1" />
+                  <line x1="0" y1="0" x2="0" y2="10" stroke="#8B7D6B" strokeWidth="1" />
+                  <line x1="200" y1="0" x2="200" y2="10" stroke="#8B7D6B" strokeWidth="1" />
+                  <text x="100" y="22" textAnchor="middle" fontSize="12" fontFamily="'Outfit', sans-serif" fill="#8B7D6B">10 feet</text>
+                </g>
+              </svg>
+            </PlantingLayout>
+
+            <Flourish style={{ marginTop: "32px" }} />
           </div>
         )}
 
