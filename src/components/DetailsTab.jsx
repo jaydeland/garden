@@ -138,7 +138,7 @@ function RowVisualization({ row, seedMap }) {
       <div
         style={{
           fontFamily: "'Outfit', sans-serif",
-          fontSize: "10px",
+          fontSize: "12px",
           fontWeight: 700,
           letterSpacing: "0.12em",
           textTransform: "uppercase",
@@ -197,7 +197,7 @@ function RowVisualization({ row, seedMap }) {
               <span
                 style={{
                   fontFamily: "'Cormorant Garamond', Georgia, serif",
-                  fontSize: "9.5px",
+                  fontSize: "12px",
                   color: "#1A1208",
                   fontWeight: 600,
                   lineHeight: 1.2,
@@ -227,7 +227,7 @@ function RowVisualization({ row, seedMap }) {
                 <span
                   style={{
                     fontFamily: "'Outfit', sans-serif",
-                    fontSize: "9px",
+                    fontSize: "12px",
                     color: "#6B5020",
                     fontStyle: "italic",
                     marginTop: "2px",
@@ -257,7 +257,7 @@ function RowVisualization({ row, seedMap }) {
             <div
               style={{
                 fontFamily: "'Outfit', sans-serif",
-                fontSize: "9px",
+                fontSize: "12px",
                 color: "#6B5020",
                 letterSpacing: "0.05em",
                 lineHeight: 1.4,
@@ -274,7 +274,7 @@ function RowVisualization({ row, seedMap }) {
               <div
                 style={{
                   fontFamily: "'Cormorant Garamond', Georgia, serif",
-                  fontSize: "10px",
+                  fontSize: "12px",
                   color: "#1A1208",
                   fontWeight: 700,
                   marginTop: "2px",
@@ -286,7 +286,7 @@ function RowVisualization({ row, seedMap }) {
               <div
                 style={{
                   fontFamily: "'Cormorant Garamond', Georgia, serif",
-                  fontSize: "9px",
+                  fontSize: "12px",
                   color: "#7A5C1E",
                   fontStyle: "italic",
                   marginTop: "2px",
@@ -315,7 +315,7 @@ function SowingHarvestSummary({ zone, seedMap }) {
       <div
         style={{
           fontFamily: "'Outfit', sans-serif",
-          fontSize: "10px",
+          fontSize: "12px",
           fontWeight: 700,
           letterSpacing: "0.12em",
           textTransform: "uppercase",
@@ -353,7 +353,7 @@ function SowingHarvestSummary({ zone, seedMap }) {
                 background: color,
                 color: "#fff",
                 fontFamily: "'Outfit', sans-serif",
-                fontSize: "8px",
+                fontSize: "12px",
                 fontWeight: 700,
                 letterSpacing: "0.06em",
                 textTransform: "uppercase",
@@ -380,7 +380,7 @@ function SowingHarvestSummary({ zone, seedMap }) {
               <div
                 style={{
                   fontFamily: "'Cormorant Garamond', Georgia, serif",
-                  fontSize: "11px",
+                  fontSize: "12px",
                   fontWeight: 700,
                   color: "#1A1208",
                   marginBottom: "5px",
@@ -398,7 +398,7 @@ function SowingHarvestSummary({ zone, seedMap }) {
                   <span
                     style={{
                       fontFamily: "'Outfit', sans-serif",
-                      fontSize: "9px",
+                      fontSize: "12px",
                       color: "#6B5020",
                       display: "block",
                       marginTop: "2px",
@@ -412,7 +412,7 @@ function SowingHarvestSummary({ zone, seedMap }) {
                   <span
                     style={{
                       fontFamily: "'Cormorant Garamond', Georgia, serif",
-                      fontSize: "9.5px",
+                      fontSize: "12px",
                       color: "#7A5C1E",
                       fontStyle: "italic",
                       display: "block",
@@ -469,7 +469,7 @@ function ZoneDetailCard({ zone, seedMap }) {
         <span
           style={{
             fontFamily: "'Outfit', sans-serif",
-            fontSize: "11px",
+            fontSize: "12px",
             color: "#8B6A18",
             letterSpacing: "0.06em",
           }}
@@ -558,7 +558,7 @@ export default function DetailsTab({ zones, seeds }) {
           <p
             style={{
               fontFamily: "'Outfit', sans-serif",
-              fontSize: "10px",
+              fontSize: "12px",
               letterSpacing: "0.1em",
               textTransform: "uppercase",
               color: "#8B6A18",
