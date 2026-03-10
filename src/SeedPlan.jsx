@@ -1111,7 +1111,7 @@ export default function SeedPlan() {
         {/* === THE DETAILS === */}
         {activeTab === "details" && (
           <div style={{ animation: "fadeUp 0.5s ease both" }}>
-            <DetailsTab />
+            <DetailsTab zones={ZONES} seeds={SEEDS} />
           </div>
         )}
 
