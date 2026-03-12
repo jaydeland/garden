@@ -528,21 +528,68 @@ function buildPlacementData() {
   return data;
 }
 
+// --- Frost countdown helpers ---
+const LAST_FROST = new Date(new Date().getFullYear(), 4, 15); // May 15
+const SEASON_START = new Date(new Date().getFullYear(), 1, 1);  // Feb 1
+function daysUntilFrost() {
+  const today = new Date(); today.setHours(0, 0, 0, 0);
+  return Math.max(0, Math.ceil((LAST_FROST - today) / 86400000));
+}
+function frostProgressPct() {
+  const today = new Date();
+  return Math.min(100, Math.max(0, Math.round(((today - SEASON_START) / (LAST_FROST - SEASON_START)) * 100)));
+}
+function currentTimelineKey() {
+  const m = new Date().getMonth();
+  if (m <= 2) return "Feb–Mar";
+  if (m === 3) return "Apr";
+  if (m === 4) return "May";
+  if (m === 5) return "Jun";
+  if (m <= 7) return "Jul–Aug";
+  return "Sep–Oct";
+}
+function loadTracker() {
+  try { return JSON.parse(localStorage.getItem("gardenTracker") || "{}"); } catch { return {}; }
+}
+function saveTracker(t) { localStorage.setItem("gardenTracker", JSON.stringify(t)); }
+
 export default function SeedPlan() {
   const [activeTab, setActiveTab] = useState("timeline");
   const [expandedMonth, setExpandedMonth] = useState("Feb–Mar");
   const [expandedIssue, setExpandedIssue] = useState("Feb–Mar");
   const [selectedSeed, setSelectedSeed] = useState(null);
   const [catFilter, setCatFilter] = useState("All");
+  const [seedSearch, setSeedSearch] = useState("");
+  const [tracker, setTracker] = useState(loadTracker);
+  const [bouquet, setBouquet] = useState([]);
   const [selectedZone, setSelectedZone] = useState(null);
   const [selectedPlacement, setSelectedPlacement] = useState(null);
-  const [zonePosition, setZonePosition] = useState(null); // { x, y } screen position of zone top for popup
-  const [timingFilter, setTimingFilter] = useState(null); // { type: 'method'|'week', value: string }
-  const [highlightMode, setHighlightMode] = useState('none'); // 'none' | 'timing' | 'seed'
+  const [zonePosition, setZonePosition] = useState(null);
+  const [timingFilter, setTimingFilter] = useState(null);
+  const [highlightMode, setHighlightMode] = useState('none');
   const [selectedWeek, setSelectedWeek] = useState(null);
 
-  const filtered = catFilter === "All" ? SEEDS : SEEDS.filter(s => s.cat === catFilter);
+  const frozenDays = daysUntilFrost();
+  const frostPct = frostProgressPct();
+  const thisWeekKey = currentTimelineKey();
+  const thisWeekData = TIMELINE[thisWeekKey];
+
+  const filtered = SEEDS.filter(s =>
+    (catFilter === "All" || s.cat === catFilter) &&
+    (seedSearch === "" || s.name.toLowerCase().includes(seedSearch.toLowerCase()))
+  );
   const placementData = buildPlacementData();
+
+  function toggleTracker(seedName, stage) {
+    const key = `${seedName}::${stage}`;
+    const next = { ...tracker, [key]: !tracker[key] };
+    setTracker(next);
+    saveTracker(next);
+  }
+  function trackerChecked(seedName, stage) { return !!tracker[`${seedName}::${stage}`]; }
+  function toggleBouquet(seedName) {
+    setBouquet(b => b.includes(seedName) ? b.filter(n => n !== seedName) : [...b, seedName]);
+  }
 
   // Get current week for timeline highlighting
   const currentWeek = 10; // Early March
@@ -562,6 +609,12 @@ export default function SeedPlan() {
         @keyframes fadeUp { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: translateY(0); } }
         .seed-card:hover { transform: translateY(-2px); box-shadow: 0 8px 30px rgba(59,47,32,0.1); }
         .month-btn:hover { background: rgba(196,168,130,0.12) !important; }
+        @media print {
+          body { background: white !important; }
+          #print-content { display: block !important; }
+          button, nav, [data-no-print] { display: none !important; }
+          #print-content table { page-break-inside: avoid; }
+        }
       `}</style>
 
       <div style={{ position: "absolute", top: "12px", left: "16px", fontSize: "30px", color: "#C9960A", opacity: 0.35 }}>❧</div>
@@ -659,6 +712,29 @@ export default function SeedPlan() {
         </div>
       </div>
 
+      {/* Frost Countdown */}
+      <div style={{ maxWidth: "520px", margin: "18px auto 0", padding: "0 24px", animation: "fadeUp 0.8s ease 0.1s both" }}>
+        <div style={{ background: "rgba(255,250,235,0.7)", border: "1px solid rgba(180,140,60,0.35)", borderRadius: "4px", padding: "14px 18px" }}>
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", marginBottom: "8px" }}>
+            <span style={{ fontFamily: "'Cormorant Garamond', serif", fontStyle: "italic", fontSize: "15px", color: "#6B5020" }}>
+              {frozenDays > 0
+                ? `${frozenDays} days until last frost · May 15, Simcoe`
+                : "Last frost has passed — the garden is open"}
+            </span>
+            <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: "13px", letterSpacing: "1px", color: "#C9960A", fontWeight: 600 }}>
+              {frostPct}%
+            </span>
+          </div>
+          <div style={{ height: "6px", background: "rgba(180,140,60,0.15)", borderRadius: "3px", overflow: "hidden" }}>
+            <div style={{ height: "100%", width: `${frostPct}%`, background: "linear-gradient(90deg, #1E3A6E, #4A7AB5)", borderRadius: "3px", transition: "width 1s ease" }} />
+          </div>
+          <div style={{ display: "flex", justifyContent: "space-between", marginTop: "5px" }}>
+            <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: "11px", color: "#8B6A18", letterSpacing: "1px" }}>FEB 1</span>
+            <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: "11px", color: "#8B6A18", letterSpacing: "1px" }}>MAY 15</span>
+          </div>
+        </div>
+      </div>
+
       {/* Tabs */}
       <div style={{ display: "flex", justifyContent: "center", flexWrap: "wrap", gap: "4px", padding: "8px 16px 0", animation: "fadeUp 0.8s ease 0.15s both" }}>
         {[
@@ -669,6 +745,8 @@ export default function SeedPlan() {
           { id: "layout", label: "The Grounds" },
           { id: "details", label: "The Details" },
           { id: "field", label: "The Field" },
+          { id: "bouquet", label: "The Bouquet" },
+          { id: "print", label: "The Press" },
         ].map(tab => (
           <button key={tab.id} onClick={() => setActiveTab(tab.id)} style={{
             padding: "9px 14px",
@@ -687,6 +765,57 @@ export default function SeedPlan() {
         {/* === TIMELINE === */}
         {activeTab === "timeline" && (
           <div style={{ animation: "fadeUp 0.5s ease both" }}>
+
+            {/* This Week in the Garden */}
+            {thisWeekData && (
+              <div style={{
+                background: "linear-gradient(135deg, rgba(30,58,110,0.08), rgba(30,58,110,0.04))",
+                border: "1.5px solid #1E3A6E", borderRadius: "4px",
+                padding: "22px 24px", marginBottom: "24px",
+                animation: "fadeUp 0.5s ease both",
+              }}>
+                <div style={{ display: "flex", alignItems: "center", gap: "10px", marginBottom: "14px" }}>
+                  <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: "11px", letterSpacing: "2px", textTransform: "uppercase", color: "#1E3A6E", background: "#1E3A6E", color: "#F5EDD0", padding: "3px 10px", borderRadius: "2px", fontWeight: 600 }}>
+                    THIS WEEK
+                  </span>
+                  <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: "13px", letterSpacing: "1.5px", textTransform: "uppercase", color: "#1E3A6E", opacity: 0.7 }}>
+                    {thisWeekKey}
+                  </span>
+                </div>
+                <div style={{ fontFamily: "'Cormorant SC', serif", fontSize: "20px", color: "#1A1208", marginBottom: "14px", letterSpacing: "1px" }}>
+                  {thisWeekData.label}
+                </div>
+                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "12px" }}>
+                  <div>
+                    <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: "11px", letterSpacing: "2px", textTransform: "uppercase", color: "#8B6A18", marginBottom: "8px" }}>Tasks</div>
+                    <ul style={{ margin: 0, paddingLeft: "16px", fontFamily: "'Cormorant Garamond', serif", fontSize: "16px", lineHeight: 1.9, color: "#3B2F20" }}>
+                      {thisWeekData.tasks.map((t, i) => <li key={i}>{t}</li>)}
+                    </ul>
+                  </div>
+                  <div>
+                    <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: "11px", letterSpacing: "2px", textTransform: "uppercase", color: "#8B6A18", marginBottom: "8px" }}>Seeds in Focus</div>
+                    <div style={{ display: "flex", flexWrap: "wrap", gap: "6px" }}>
+                      {thisWeekData.seeds.map((s, i) => {
+                        const sd = SEEDS.find(x => x.name.startsWith(s));
+                        return (
+                          <span key={i} style={{
+                            fontSize: "13px", fontFamily: "'Outfit', sans-serif", padding: "3px 10px",
+                            background: sd ? sd.color + "22" : "rgba(59,47,32,0.06)",
+                            border: `1px solid ${sd ? sd.color + "55" : "rgba(196,168,130,0.2)"}`,
+                            borderRadius: "2px", color: "#3B2F20",
+                          }}>{s}</span>
+                        );
+                      })}
+                    </div>
+                    <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: "11px", letterSpacing: "2px", textTransform: "uppercase", color: "#8B6A18", marginTop: "12px", marginBottom: "6px" }}>Content</div>
+                    <div style={{ fontFamily: "'Cormorant Garamond', serif", fontStyle: "italic", fontSize: "15px", color: "#6B5020", lineHeight: 1.6 }}>
+                      {thisWeekData.social[0]}
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
+
             {Object.entries(TIMELINE).map(([month, data], idx) => {
               const isOpen = expandedMonth === month;
               return (
@@ -738,10 +867,43 @@ export default function SeedPlan() {
         {/* === SEED REGISTRY === */}
         {activeTab === "seeds" && (
           <div style={{ animation: "fadeUp 0.5s ease both" }}>
-            <div style={{ textAlign: "center", fontStyle: "italic", color: "#7A5C1E", fontSize: "18px", marginBottom: "16px", lineHeight: 1.7 }}>
-              "Thirty-seven souls, arranged by station. Tap any to reveal their particulars."
+            <div style={{ textAlign: "center", fontStyle: "italic", color: "#7A5C1E", fontSize: "18px", marginBottom: "12px", lineHeight: 1.7 }}>
+              "Fifty-seven souls, arranged by station. Tap any to reveal their particulars."
             </div>
-            {/* Category filter */}
+            {/* Tracker summary */}
+            {(() => {
+              const started = SEEDS.filter(s => trackerChecked(s.name, "Started")).length;
+              const transplanted = SEEDS.filter(s => trackerChecked(s.name, "Transplanted")).length;
+              const inGround = SEEDS.filter(s => trackerChecked(s.name, "In Ground")).length;
+              if (started + transplanted + inGround === 0) return null;
+              return (
+                <div style={{ display: "flex", justifyContent: "center", gap: "16px", marginBottom: "14px", flexWrap: "wrap" }}>
+                  {[["Started", started, "🌱"], ["Transplanted", transplanted, "🪴"], ["In Ground", inGround, "🌿"]].map(([label, count, icon]) => count > 0 && (
+                    <div key={label} style={{ fontSize: "14px", fontFamily: "'Outfit', sans-serif", padding: "5px 14px", background: "rgba(201,150,10,0.12)", border: "1px solid rgba(201,150,10,0.3)", borderRadius: "2px", color: "#6B5020" }}>
+                      {icon} {count} {label}
+                    </div>
+                  ))}
+                </div>
+              );
+            })()}
+            {/* Search + Category filter */}
+            <div style={{ display: "flex", justifyContent: "center", marginBottom: "12px" }}>
+              <input
+                type="text"
+                placeholder="Search varieties…"
+                value={seedSearch}
+                onChange={e => { setSeedSearch(e.target.value); setSelectedSeed(null); }}
+                style={{
+                  width: "100%", maxWidth: "380px", padding: "8px 14px",
+                  fontFamily: "'Outfit', sans-serif", fontSize: "14px", letterSpacing: "0.5px",
+                  background: "rgba(255,250,235,0.8)", color: "#1A1208",
+                  border: "1px solid rgba(180,140,60,0.4)", borderRadius: "2px",
+                  outline: "none", transition: "border-color 0.2s",
+                }}
+                onFocus={e => e.target.style.borderColor = "#1E3A6E"}
+                onBlur={e => e.target.style.borderColor = "rgba(180,140,60,0.4)"}
+              />
+            </div>
             <div style={{ display: "flex", justifyContent: "center", gap: "6px", marginBottom: "18px", flexWrap: "wrap" }}>
               {CATEGORIES.map(cat => (
                 <button key={cat} onClick={() => { setCatFilter(cat); setSelectedSeed(null); }} style={{
@@ -755,6 +917,11 @@ export default function SeedPlan() {
                 </button>
               ))}
             </div>
+            {filtered.length === 0 && (
+              <div style={{ textAlign: "center", fontStyle: "italic", color: "#8B6A18", fontSize: "17px", padding: "32px 0" }}>
+                No variety answers to that name. Perhaps they are travelling.
+              </div>
+            )}
             <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(min(220px, 100%), 1fr))", gap: "10px" }}>
               {filtered.map((seed, i) => {
                 const globalIdx = SEEDS.indexOf(seed);
@@ -786,6 +953,28 @@ export default function SeedPlan() {
                         </div>
                         <div style={{ marginTop: "8px", padding: "8px 10px", background: "rgba(255,255,255,0.08)", borderRadius: "2px", fontSize: "14px", fontFamily: "'Outfit', sans-serif", lineHeight: 1.5 }}>
                           📸 <span style={{ fontStyle: "italic", fontFamily: "'Cormorant Garamond', serif", fontSize: "15px" }}>{seed.socialAngle}</span>
+                        </div>
+                        {/* Seed Starting Tracker */}
+                        <div style={{ marginTop: "10px", paddingTop: "10px", borderTop: "1px solid rgba(243,236,224,0.15)" }}
+                          onClick={e => e.stopPropagation()}>
+                          <div style={{ fontSize: "11px", fontFamily: "'Outfit', sans-serif", letterSpacing: "2px", textTransform: "uppercase", opacity: 0.5, marginBottom: "8px" }}>Track Progress</div>
+                          <div style={{ display: "flex", gap: "8px", flexWrap: "wrap" }}>
+                            {["Started", "Transplanted", "In Ground"].map(stage => {
+                              const done = trackerChecked(seed.name, stage);
+                              return (
+                                <button key={stage} onClick={() => toggleTracker(seed.name, stage)} style={{
+                                  display: "flex", alignItems: "center", gap: "5px", padding: "5px 10px",
+                                  background: done ? "rgba(201,150,10,0.2)" : "rgba(255,255,255,0.07)",
+                                  border: done ? "1px solid #C9960A" : "1px solid rgba(243,236,224,0.2)",
+                                  borderRadius: "2px", cursor: "pointer", color: "inherit", fontSize: "13px",
+                                  fontFamily: "'Outfit', sans-serif", letterSpacing: "0.5px", transition: "all 0.2s",
+                                }}>
+                                  <span style={{ fontSize: "14px" }}>{done ? "✓" : "○"}</span>
+                                  {stage}
+                                </button>
+                              );
+                            })}
+                          </div>
                         </div>
                       </div>
                     )}
@@ -1266,6 +1455,157 @@ export default function SeedPlan() {
             <Flourish style={{ marginTop: "28px" }} />
           </div>
         )}
+
+        {/* === BOUQUET BUILDER === */}
+        {activeTab === "bouquet" && (
+          <div style={{ animation: "fadeUp 0.5s ease both" }}>
+            <div style={{ textAlign: "center", fontStyle: "italic", color: "#7A5C1E", fontSize: "18px", lineHeight: 1.8, maxWidth: "600px", margin: "0 auto 24px" }}>
+              "One does not simply throw flowers together. One composes. Select your varieties below
+              to assemble an arrangement worthy of a Bridgerton drawing room."
+            </div>
+
+            {/* Bouquet preview */}
+            {bouquet.length > 0 && (() => {
+              const bouquetSeeds = bouquet.map(n => SEEDS.find(s => s.name === n)).filter(Boolean);
+              const colors = bouquetSeeds.map(s => s.color);
+              // Collect all bloom months mentioned
+              const months = new Set();
+              bouquetSeeds.forEach(s => { if (s.bloom) s.bloom.split(/[,–\/]/).forEach(m => months.add(m.trim())); });
+              return (
+                <div style={{ background: "rgba(255,250,235,0.8)", border: "1.5px solid rgba(180,140,60,0.4)", borderRadius: "4px", padding: "22px 24px", marginBottom: "24px" }}>
+                  <div style={{ fontFamily: "'Cormorant SC', serif", fontSize: "18px", letterSpacing: "2px", color: "#1A1208", marginBottom: "14px" }}>
+                    This Arrangement · {bouquet.length} {bouquet.length === 1 ? "variety" : "varieties"}
+                  </div>
+                  {/* Color swatch bar */}
+                  <div style={{ display: "flex", height: "14px", borderRadius: "3px", overflow: "hidden", marginBottom: "14px" }}>
+                    {colors.map((c, i) => <div key={i} style={{ flex: 1, background: c }} title={bouquetSeeds[i]?.name} />)}
+                  </div>
+                  <div style={{ display: "flex", flexWrap: "wrap", gap: "8px", marginBottom: "14px" }}>
+                    {bouquetSeeds.map(s => (
+                      <div key={s.name} style={{ display: "flex", alignItems: "center", gap: "6px", padding: "5px 10px", background: s.color + "22", border: `1px solid ${s.color}55`, borderRadius: "2px" }}>
+                        <span style={{ fontSize: "16px" }}>{s.emoji}</span>
+                        <span style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: "15px", color: "#1A1208" }}>{s.name}</span>
+                        <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: "12px", color: "#8B6A18" }}>{s.height}</span>
+                        <button onClick={() => toggleBouquet(s.name)} style={{ background: "none", border: "none", cursor: "pointer", color: "#8B6A18", fontSize: "14px", padding: "0 2px", lineHeight: 1 }}>×</button>
+                      </div>
+                    ))}
+                  </div>
+                  <div style={{ display: "flex", gap: "20px", flexWrap: "wrap" }}>
+                    <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: "13px", color: "#6B5020" }}>
+                      <span style={{ letterSpacing: "1.5px", textTransform: "uppercase", opacity: 0.6 }}>Bloom months </span>
+                      {[...months].filter(Boolean).join(", ") || "—"}
+                    </div>
+                    <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: "13px", color: "#6B5020" }}>
+                      <span style={{ letterSpacing: "1.5px", textTransform: "uppercase", opacity: 0.6 }}>Heights </span>
+                      {bouquetSeeds.map(s => s.height).join(", ")}
+                    </div>
+                  </div>
+                  <button onClick={() => setBouquet([])} style={{ marginTop: "14px", padding: "6px 14px", background: "transparent", border: "1px solid rgba(180,140,60,0.4)", borderRadius: "2px", color: "#8B6A18", fontFamily: "'Outfit', sans-serif", fontSize: "13px", letterSpacing: "1px", cursor: "pointer" }}>
+                    Clear arrangement
+                  </button>
+                </div>
+              );
+            })()}
+            {bouquet.length === 0 && (
+              <div style={{ textAlign: "center", fontFamily: "'Cormorant Garamond', serif", fontStyle: "italic", color: "#C9960A", fontSize: "16px", marginBottom: "18px" }}>
+                ❦ Tap any variety below to begin composing ❦
+              </div>
+            )}
+
+            {/* Seed picker grouped by category */}
+            {["Cut Flowers", "Foliage & Filler", "Kitchen Garden"].map(cat => (
+              <div key={cat} style={{ marginBottom: "20px" }}>
+                <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: "12px", letterSpacing: "2px", textTransform: "uppercase", color: "#8B6A18", marginBottom: "10px", paddingBottom: "6px", borderBottom: "1px solid rgba(180,140,60,0.2)" }}>
+                  {cat}
+                </div>
+                <div style={{ display: "flex", flexWrap: "wrap", gap: "7px" }}>
+                  {SEEDS.filter(s => s.cat === cat).map(s => {
+                    const inBouquet = bouquet.includes(s.name);
+                    return (
+                      <button key={s.name} onClick={() => toggleBouquet(s.name)} style={{
+                        display: "flex", alignItems: "center", gap: "5px", padding: "6px 12px",
+                        background: inBouquet ? s.color + "33" : "rgba(255,250,235,0.65)",
+                        border: `1px solid ${inBouquet ? s.color : "rgba(180,140,60,0.25)"}`,
+                        borderRadius: "2px", cursor: "pointer", transition: "all 0.2s",
+                        fontFamily: "'Cormorant Garamond', serif", fontSize: "15px", color: "#1A1208",
+                      }}>
+                        <span style={{ fontSize: "14px" }}>{s.emoji}</span>
+                        {s.name}
+                        {inBouquet && <span style={{ color: s.color, fontWeight: 700, fontSize: "13px" }}>✓</span>}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+            ))}
+            <Flourish style={{ marginTop: "28px" }} />
+          </div>
+        )}
+
+        {/* === THE PRESS (Print View) === */}
+        {activeTab === "print" && (
+          <div style={{ animation: "fadeUp 0.5s ease both", maxWidth: "720px", margin: "0 auto" }}>
+            <div style={{ textAlign: "center", fontStyle: "italic", color: "#7A5C1E", fontSize: "18px", lineHeight: 1.8, marginBottom: "28px" }}>
+              "A garden plan fit for the press. Print this page for reference in the field —
+              one does not garden from memory alone."
+            </div>
+            <div style={{ display: "flex", justifyContent: "center", marginBottom: "28px" }}>
+              <button onClick={() => window.print()} style={{
+                padding: "12px 32px", background: "linear-gradient(145deg, #1E3A6E, #152D57)",
+                color: "#F5EDD0", border: "none", borderRadius: "2px", cursor: "pointer",
+                fontFamily: "'Outfit', sans-serif", fontSize: "14px", letterSpacing: "2px", textTransform: "uppercase",
+              }}>
+                🖨 Print Garden Plan
+              </button>
+            </div>
+
+            {/* Seed list by order */}
+            <div id="print-content">
+              <div style={{ fontFamily: "'Cormorant SC', serif", fontSize: "22px", letterSpacing: "3px", color: "#1A1208", marginBottom: "6px", textAlign: "center" }}>
+                Lady Gardendown's Seed List · 2026
+              </div>
+              <div style={{ textAlign: "center", fontFamily: "'Outfit', sans-serif", fontSize: "12px", letterSpacing: "2px", color: "#8B6A18", marginBottom: "20px" }}>
+                57 VARIETIES · HIGHWAY 3, SIMCOE, ONTARIO · ZONE 6B · LAST FROST ~MAY 15
+              </div>
+              {["Order 1", "Moonglow", "Stems", "OSC"].map(src => {
+                const seeds = SEEDS.filter(s => s.source === src);
+                const labels = { "Order 1": "Original Order (WEB-024012)", "Moonglow": "Moonglow Gardens (R709518406)", "Stems": "Stems Flower Farm (#29659)", "OSC": "Ontario Seed Co. (OSC-2026)" };
+                return (
+                  <div key={src} style={{ marginBottom: "20px" }}>
+                    <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: "12px", letterSpacing: "2px", textTransform: "uppercase", color: "#C9960A", marginBottom: "8px", paddingBottom: "4px", borderBottom: "2px solid #1A1208" }}>
+                      {labels[src]} · {seeds.length} varieties
+                    </div>
+                    <table style={{ width: "100%", borderCollapse: "collapse", fontFamily: "'Outfit', sans-serif", fontSize: "13px" }}>
+                      <thead>
+                        <tr style={{ background: "rgba(180,140,60,0.08)" }}>
+                          {["Variety", "Cat.", "Indoors", "Direct Sow", "Bloom", "Height"].map(h => (
+                            <th key={h} style={{ padding: "5px 8px", textAlign: "left", letterSpacing: "1px", color: "#8B6A18", fontWeight: 600, borderBottom: "1px solid rgba(180,140,60,0.2)" }}>{h}</th>
+                          ))}
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {seeds.map((s, i) => (
+                          <tr key={s.name} style={{ background: i % 2 === 0 ? "transparent" : "rgba(180,140,60,0.04)" }}>
+                            <td style={{ padding: "5px 8px", borderBottom: "1px solid rgba(180,140,60,0.1)" }}>
+                              <span style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: "15px" }}>{s.emoji} {s.name}</span>
+                            </td>
+                            <td style={{ padding: "5px 8px", borderBottom: "1px solid rgba(180,140,60,0.1)", color: "#6B5020", fontSize: "12px" }}>{s.cat.replace("Foliage & Filler", "Foliage").replace("Kitchen Garden", "Kitchen")}</td>
+                            <td style={{ padding: "5px 8px", borderBottom: "1px solid rgba(180,140,60,0.1)" }}>{s.startIndoors}</td>
+                            <td style={{ padding: "5px 8px", borderBottom: "1px solid rgba(180,140,60,0.1)" }}>{s.directSow}</td>
+                            <td style={{ padding: "5px 8px", borderBottom: "1px solid rgba(180,140,60,0.1)" }}>{s.bloom}</td>
+                            <td style={{ padding: "5px 8px", borderBottom: "1px solid rgba(180,140,60,0.1)" }}>{s.height}</td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                );
+              })}
+            </div>
+            <Flourish style={{ marginTop: "28px" }} />
+          </div>
+        )}
+
       </div>
 
       {/* Footer */}
