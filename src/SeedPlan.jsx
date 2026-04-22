@@ -303,7 +303,7 @@ const ZONES = [
     id: "foliage",
     label: "Foliage & Filler Strip",
     depth: 16, yStart: 0,
-    fill: "#C5D9B0", stroke: "#7B8F50",
+    fill: "#C6C090", stroke: "#8F9E76",
     note: "Front-of-property structural planting. Tall foliage at the back frames the cut flower beds beyond. Direct sow throughout — these varieties resent transplanting.",
     rows: [
       {
@@ -330,7 +330,7 @@ const ZONES = [
     id: "zinnias",
     label: "Cut Flower Beds B \u2014 Zinnias",
     depth: 15, yStart: 20,
-    fill: "#F0DFA0", stroke: "#C4A030",
+    fill: "#D4B772", stroke: "#8B6A18",
     note: "Seven zinnia varieties for massed colour and non-stop harvest Jul\u2013frost. Start indoors Apr; transplant after last frost. Pinch ALL plants at 30cm for branching.",
     rows: [
       {
@@ -354,7 +354,7 @@ const ZONES = [
     id: "mixed",
     label: "Cut Flower Beds A \u2014 Mixed",
     depth: 15, yStart: 35,
-    fill: "#D4C5E0", stroke: "#8B6B9E",
+    fill: "#B3A28F", stroke: "#6B5020",
     note: "The heart of the cutting garden. 14 varieties from 20cm to 90cm \u2014 arranged strictly shortest-to-tallest front-to-back. Sea Holly and Marigold anchor the rear.",
     rows: [
       {
@@ -391,7 +391,7 @@ const ZONES = [
     id: "poppies",
     label: "Poppy Meadow",
     depth: 14, yStart: 54,
-    fill: "#EEC5C5", stroke: "#B06060",
+    fill: "#C28B7A", stroke: "#6B1E35",
     note: "Direct sow ONLY \u2014 poppies categorically refuse transplanting. Scatter onto cold soil in early April and barely cover (they need light to germinate). Do not rake in.",
     rows: [
       {
@@ -423,7 +423,7 @@ const ZONES = [
     id: "kitchen",
     label: "Kitchen Garden",
     depth: 28, yStart: 72,
-    fill: "#C8DEB5", stroke: "#6B8E23",
+    fill: "#8F9E76", stroke: "#5A6B40",
     note: "28 feet of productive chaos at the rear of the property. Tomatoes are the stars; dill and sprouts support in character roles. All tomatoes need staking \u2014 prepare cages before transplanting.",
     rows: [
       {
@@ -552,6 +552,47 @@ function loadTracker() {
   try { return JSON.parse(localStorage.getItem("gardenTracker") || "{}"); } catch { return {}; }
 }
 function saveTracker(t) { localStorage.setItem("gardenTracker", JSON.stringify(t)); }
+
+function SeedGlyph({ cat, color = "#8B6A18", size = 22 }) {
+  const common = { width: size, height: size, viewBox: "0 0 32 32", fill: "none", stroke: color, strokeWidth: 1.4, strokeLinecap: "round", strokeLinejoin: "round" };
+  if (cat === "Foliage & Filler") {
+    // stem with four simple leaves
+    return (
+      <svg {...common}>
+        <path d="M16 29 V6" />
+        <path d="M16 12 Q9 10 7 14 Q12 14 16 12 Z" />
+        <path d="M16 17 Q23 15 25 19 Q20 19 16 17 Z" />
+        <path d="M16 21 Q9 19 7 23 Q12 23 16 21 Z" />
+        <path d="M16 7 Q19 4 22 6 Q19 8 16 7 Z" />
+      </svg>
+    );
+  }
+  if (cat === "Kitchen Garden") {
+    // pot with sprout
+    return (
+      <svg {...common}>
+        <path d="M9 18 L23 18 L21 28 L11 28 Z" />
+        <path d="M8 18 L24 18" />
+        <path d="M16 18 V10" />
+        <path d="M16 13 Q11 10 10 5 Q15 7 16 13" />
+        <path d="M16 13 Q21 10 22 5 Q17 7 16 13" />
+      </svg>
+    );
+  }
+  // Cut Flowers — five-petal bloom
+  return (
+    <svg {...common}>
+      <circle cx="16" cy="14" r="3" />
+      <path d="M16 11 Q14 6 16 4 Q18 6 16 11 Z" />
+      <path d="M18.5 12.5 Q23 10 24.5 12 Q22.5 15 18.5 12.5 Z" />
+      <path d="M18 15.5 Q23 17.5 23 20.5 Q19.5 19.5 18 15.5 Z" />
+      <path d="M14 15.5 Q9 17.5 9 20.5 Q12.5 19.5 14 15.5 Z" />
+      <path d="M13.5 12.5 Q9 10 7.5 12 Q9.5 15 13.5 12.5 Z" />
+      <path d="M16 20 V29" />
+      <path d="M16 25 Q13 24 12 26" />
+    </svg>
+  );
+}
 
 export default function SeedPlan() {
   const [activeTab, setActiveTab] = useState("timeline");
@@ -683,9 +724,18 @@ export default function SeedPlan() {
           padding: "22px 28px",
           boxShadow: "0 2px 16px rgba(180,140,60,0.10)",
         }}>
-          <div style={{ fontSize: "28px", color: "#C9960A", lineHeight: 1, marginBottom: "10px", fontFamily: "'Cormorant Garamond', serif" }}>"</div>
           <div style={{ fontSize: "17px", fontStyle: "italic", lineHeight: 1.9, color: "#7A5C1E", fontFamily: "'Cormorant Garamond', serif" }}>
-            Dear Reader — fifty-seven varieties have been summoned from four purveyors to the estate grounds along Highway 3.
+            <span style={{
+              float: "left",
+              fontFamily: "'Cormorant SC', serif",
+              fontStyle: "normal",
+              fontSize: "72px",
+              lineHeight: 0.9,
+              color: "#1E3A6E",
+              padding: "6px 12px 0 0",
+              textShadow: "1px 1px 0 rgba(201,150,10,0.25)",
+            }}>D</span>
+            ear Reader — fifty-seven varieties have been summoned from four purveyors to the estate grounds along Highway 3.
             Cut flowers, foliage, nine tomatoes of unusual character, poppies sown with reckless ambition,
             three basils, an Edelweiss, and one Brussels sprout for good measure.
             This author has made thorough enquiry. What follows is their Season.
@@ -702,11 +752,23 @@ export default function SeedPlan() {
             { name: "Ontario Seed Co.", count: 20 },
           ].map((o, i) => (
             <div key={i} style={{
-              fontSize: "14px", fontFamily: "'Outfit', sans-serif", padding: "6px 14px",
-              background: "#6B1E35", border: "1px solid #4A1226",
-              borderRadius: "2px", color: "#F5EDD0",
+              fontSize: "14px", fontFamily: "'Cormorant Garamond', serif",
+              padding: "7px 14px",
+              background: "rgba(255,250,232,0.5)",
+              border: "1px solid rgba(180,140,60,0.35)",
+              borderRadius: "2px", color: "#1A1208",
+              display: "inline-flex", alignItems: "baseline", gap: "8px",
+              whiteSpace: "nowrap",
             }}>
-              <strong>{o.name}</strong> · {o.count} varieties
+              <span style={{
+                fontFamily: "'Outfit', sans-serif", fontSize: "10px",
+                letterSpacing: "2.5px", color: "#8B6A18",
+              }}>
+                {String(i + 1).padStart(2, "0")}
+              </span>
+              {o.name}
+              <span style={{ color: "#C9960A" }}>·</span>
+              <strong style={{ fontWeight: 600 }}>{o.count}</strong>
             </div>
           ))}
         </div>
@@ -714,50 +776,78 @@ export default function SeedPlan() {
 
       {/* Frost Countdown */}
       <div style={{ maxWidth: "520px", margin: "18px auto 0", padding: "0 24px", animation: "fadeUp 0.8s ease 0.1s both" }}>
-        <div style={{ background: "rgba(255,250,235,0.7)", border: "1px solid rgba(180,140,60,0.35)", borderRadius: "4px", padding: "14px 18px" }}>
-          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", marginBottom: "8px" }}>
-            <span style={{ fontFamily: "'Cormorant Garamond', serif", fontStyle: "italic", fontSize: "15px", color: "#6B5020" }}>
-              {frozenDays > 0
-                ? `${frozenDays} days until last frost · May 15, Simcoe`
-                : "Last frost has passed — the garden is open"}
-            </span>
-            <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: "13px", letterSpacing: "1px", color: "#C9960A", fontWeight: 600 }}>
-              {frostPct}%
-            </span>
+        <div style={{ background: "rgba(255,250,235,0.7)", border: "1px solid rgba(180,140,60,0.35)", borderRadius: "4px", padding: "18px 22px" }}>
+          {frozenDays > 0 ? (
+            <div style={{ display: "flex", alignItems: "baseline", gap: "10px" }}>
+              <span style={{ fontFamily: "'Cormorant SC', serif", fontSize: "34px", color: "#1A1208", letterSpacing: "1px", lineHeight: 1 }}>
+                {frozenDays}
+              </span>
+              <span style={{ fontFamily: "'Cormorant Garamond', serif", fontStyle: "italic", fontSize: "15px", color: "#7A5C1E" }}>
+                days until last frost, Simcoe
+              </span>
+            </div>
+          ) : (
+            <div style={{ fontFamily: "'Cormorant Garamond', serif", fontStyle: "italic", fontSize: "17px", color: "#1A1208" }}>
+              Last frost has passed — the garden is open.
+            </div>
+          )}
+          <div style={{ height: "6px", background: "rgba(180,140,60,0.18)", borderRadius: "3px", margin: "14px 0 6px", position: "relative", overflow: "visible" }}>
+            <div style={{ height: "100%", width: `${frostPct}%`, background: "linear-gradient(90deg, #152D57, #1E3A6E)", borderRadius: "3px", transition: "width 1s ease" }} />
+            <div style={{
+              position: "absolute", top: "-6px", left: `${frostPct}%`, width: "2px", height: "18px",
+              background: "#6B1E35", transform: "translateX(-1px)", transition: "left 1s ease",
+            }}>
+              <div style={{
+                position: "absolute", top: "-4px", left: "-3px", width: "8px", height: "8px",
+                background: "#6B1E35", borderRadius: "50%",
+                boxShadow: "0 1px 3px rgba(0,0,0,0.2)",
+              }} />
+            </div>
           </div>
-          <div style={{ height: "6px", background: "rgba(180,140,60,0.15)", borderRadius: "3px", overflow: "hidden" }}>
-            <div style={{ height: "100%", width: `${frostPct}%`, background: "linear-gradient(90deg, #1E3A6E, #4A7AB5)", borderRadius: "3px", transition: "width 1s ease" }} />
-          </div>
-          <div style={{ display: "flex", justifyContent: "space-between", marginTop: "5px" }}>
-            <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: "11px", color: "#8B6A18", letterSpacing: "1px" }}>FEB 1</span>
-            <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: "11px", color: "#8B6A18", letterSpacing: "1px" }}>MAY 15</span>
+          <div style={{ display: "flex", justifyContent: "space-between" }}>
+            <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: "11px", color: "#8B6A18", letterSpacing: "1.5px" }}>FEB 1</span>
+            <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: "11px", color: "#8B6A18", letterSpacing: "1.5px" }}>MAY 15</span>
           </div>
         </div>
       </div>
 
-      {/* Tabs */}
-      <div style={{ display: "flex", justifyContent: "center", flexWrap: "wrap", gap: "4px", padding: "8px 16px 0", animation: "fadeUp 0.8s ease 0.15s both" }}>
-        {[
-          { id: "timeline", label: "The Calendar" },
-          { id: "seeds", label: "The Registry" },
-          { id: "social", label: "Issues" },
-          { id: "palettes", label: "The Palettes" },
-          { id: "layout", label: "The Grounds" },
-          { id: "details", label: "The Details" },
-          { id: "field", label: "The Field" },
-          { id: "bouquet", label: "The Bouquet" },
-          { id: "print", label: "The Press" },
-        ].map(tab => (
-          <button key={tab.id} onClick={() => setActiveTab(tab.id)} style={{
-            padding: "9px 14px",
-            border: activeTab === tab.id ? "1px solid #1E3A6E" : "1px solid rgba(180,140,60,0.3)",
-            background: activeTab === tab.id ? "#1E3A6E" : "transparent",
-            color: activeTab === tab.id ? "#F5EDD0" : "#7A5C1E",
-            fontSize: "13px", fontFamily: "'Outfit', sans-serif", fontWeight: 500,
-            letterSpacing: "1.5px", textTransform: "uppercase", cursor: "pointer",
-            borderRadius: "2px", transition: "all 0.35s ease", whiteSpace: "nowrap",
-          }}>{tab.label}</button>
-        ))}
+      {/* Tabs — newspaper masthead */}
+      <div style={{
+        maxWidth: "1100px", margin: "20px auto 0", padding: "0 16px",
+        animation: "fadeUp 0.8s ease 0.15s both",
+      }}>
+        <div style={{
+          display: "flex", flexWrap: "wrap", justifyContent: "center",
+          borderTop: "2px solid #1A1208",
+          borderBottom: "1px solid #1A1208",
+          padding: "10px 0",
+        }}>
+          {[
+            { id: "timeline", label: "The Calendar" },
+            { id: "seeds", label: "The Registry" },
+            { id: "social", label: "The Issues" },
+            { id: "palettes", label: "The Palettes" },
+            { id: "layout", label: "The Grounds" },
+            { id: "details", label: "The Details" },
+            { id: "field", label: "The Field" },
+            { id: "bouquet", label: "The Bouquet" },
+            { id: "print", label: "The Press" },
+          ].map((tab, i, arr) => (
+            <button key={tab.id} onClick={() => setActiveTab(tab.id)} style={{
+              padding: "4px 18px",
+              background: "transparent", border: 0,
+              borderRight: i < arr.length - 1 ? "1px solid rgba(180,140,60,0.4)" : "0",
+              color: activeTab === tab.id ? "#1E3A6E" : "#1A1208",
+              fontFamily: "'Cormorant SC', serif",
+              fontSize: "14px",
+              fontWeight: activeTab === tab.id ? 600 : 400,
+              letterSpacing: "0.12em",
+              cursor: "pointer",
+              whiteSpace: "nowrap",
+              transition: "color 0.25s ease",
+            }}>{tab.label}</button>
+          ))}
+        </div>
       </div>
 
       <div style={{ padding: "24px", maxWidth: activeTab === "details" ? "none" : "1200px", margin: "0 auto" }}>
@@ -936,9 +1026,9 @@ export default function SeedPlan() {
                     animation: `fadeUp 0.4s ease ${i * 0.03}s both`,
                   }}>
                     <div style={{ position: "absolute", top: 0, left: 0, width: "100%", height: "3px", background: `linear-gradient(90deg, ${seed.color}, transparent)` }} />
-                    <div style={{ display: "flex", alignItems: "center", gap: "6px", marginBottom: "4px" }}>
-                      <span style={{ fontSize: "18px" }}>{seed.emoji}</span>
-                      <span style={{ fontSize: "14px", fontFamily: "'Outfit', sans-serif", letterSpacing: "1.5px", textTransform: "uppercase", opacity: 0.45 }}>{seed.source}</span>
+                    <div style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "4px" }}>
+                      <SeedGlyph cat={seed.cat} color={isSelected ? "#F5EDD0" : "#8B6A18"} size={26} />
+                      <span style={{ fontSize: "14px", fontFamily: "'Outfit', sans-serif", letterSpacing: "1.5px", textTransform: "uppercase", opacity: 0.5 }}>{seed.source}</span>
                     </div>
                     <div style={{ fontSize: "19px", fontWeight: 600, lineHeight: 1.2, marginBottom: "4px", fontStyle: "italic" }}>{seed.name}</div>
                     <div style={{ fontSize: "16px", fontStyle: "italic", opacity: 0.65, lineHeight: 1.45 }}>{seed.regency}</div>
@@ -1614,20 +1704,31 @@ export default function SeedPlan() {
         <div style={{ fontSize: "13px", fontFamily: "'Outfit', sans-serif", color: "#1A1208", marginTop: "14px", letterSpacing: "1px", lineHeight: 1.8 }}>
           Total investment: ~C$171 · Last frost Simcoe ~May 15–20
         </div>
-        <div style={{
-          maxWidth: "560px", margin: "18px auto 0",
-          background: "rgba(255,250,235,0.65)",
-          border: "1px solid rgba(180,140,60,0.35)",
-          borderRadius: "8px",
-          padding: "22px 28px",
-          boxShadow: "0 2px 16px rgba(180,140,60,0.10)",
-          textAlign: "left",
-        }}>
-          <div style={{ fontSize: "28px", color: "#C9960A", lineHeight: 1, marginBottom: "10px", fontFamily: "'Cormorant Garamond', serif" }}>"</div>
-          <div style={{ fontSize: "16px", fontStyle: "italic", lineHeight: 1.85, color: "#1A1208", fontFamily: "'Cormorant Garamond', serif" }}>
-            Yours, as always, with discretion and a trowel. One does not order from four seed purveyors by accident. One does it because the heart wants what the heart wants, and the garden has room.
+        <div style={{ textAlign: "center", margin: "32px auto 0", padding: "28px 20px" }}>
+          <div style={{ fontSize: "22px", color: "#C9960A", letterSpacing: "0.6em", marginBottom: "14px" }}>
+            ❦ ✿ ❦
           </div>
-          <div style={{ fontSize: "13px", fontFamily: "'Outfit', sans-serif", letterSpacing: "2px", textTransform: "uppercase", color: "#8B6A18", marginTop: "14px" }}>— Lady Gardendown</div>
+          <div style={{
+            display: "inline-block",
+            fontFamily: "'Cormorant SC', serif",
+            fontSize: "26px",
+            letterSpacing: "0.3em",
+            color: "#1A1208",
+            borderTop: "1px solid #1A1208",
+            borderBottom: "1px solid #1A1208",
+            padding: "6px 36px",
+          }}>
+            FINIS
+          </div>
+          <div style={{
+            marginTop: "14px",
+            fontFamily: "'Cormorant Garamond', serif",
+            fontStyle: "italic",
+            fontSize: "15px",
+            color: "#7A5C1E",
+          }}>
+            Yours, with discretion and a trowel.
+          </div>
         </div>
       </div>
     </div>
